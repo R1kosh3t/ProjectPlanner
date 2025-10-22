@@ -1,0 +1,163 @@
+{
+  "header": {
+    "title": "Планировщик Проектов",
+    "subtitle": "Инструмент для управления проектами в стиле Kanban",
+    "searchPlaceholder": "Поиск задач...",
+    "allAssignees": "Все исполнители",
+    "adminPanel": "Панель админа",
+    "logOut": "Выйти"
+  },
+  "views": {
+    "board": "Доска",
+    "list": "Список",
+    "calendar": "Календарь",
+    "workload": "Нагрузка"
+  },
+  "auth": {
+    "login": "Войти",
+    "signup": "Регистрация",
+    "mainTitle": "Планировщик Проектов",
+    "subtitle": "Ваш современный инструмент для управления проектами",
+    "nameLabel": "Полное имя",
+    "namePlaceholder": "например, Алексей Петров",
+    "emailLabel": "Email адрес",
+    "passwordLabel": "Пароль",
+    "passwordNote": "Примечание: для этого демо подойдет любой пароль.",
+    "submitLogin": "Войти",
+    "submitRegister": "Создать аккаунт",
+    "processing": "Обработка...",
+    "noAccount": "Нет аккаунта?",
+    "haveAccount": "Уже есть аккаунт?",
+    "errorUserNotFound": "Пользователь не найден.",
+    "errorEmailInUse": "Этот email уже используется.",
+    "errorGeneric": "Произошла ошибка."
+  },
+  "noProject": {
+    "welcome": "Добро пожаловать, {{name}}!",
+    "noAccess": "Вы успешно создали аккаунт, но у вас еще нет доступа к проектам.",
+    "joinTitle": "Присоединиться к проекту",
+    "joinMessage": "Введите код-приглашение, чтобы получить доступ к доске вашего проекта.",
+    "codeInputPlaceholder": "Введите код (например, JOIN-PROJ-123)",
+    "joinButton": "Присоединиться",
+    "joiningButton": "Присоединяемся...",
+    "errorInvalidCode": "Неверный код-приглашение.",
+    "errorJoinFailed": "Не удалось присоединиться к проекту.",
+    "errorEnterCode": "Пожалуйста, введите код-приглашение."
+  },
+  "adminWelcome": {
+    "welcome": "Добро пожаловать, администратор {{name}}!",
+    "message": "Всё готово. Ваш первый шаг — создать проект для вашей команды.",
+    "workspaceTitle": "Ваше рабочее пространство ждет",
+    "workspaceMessage": "Создайте проект, чтобы начать управлять задачами, приглашать участников и организовывать рабочий процесс.",
+    "createProjectButton": "Создать свой первый проект"
+  },
+  "adminPanel": {
+    "title": "Панель администратора",
+    "createProjectTitle": "Создать новый проект",
+    "newProjectPlaceholder": "Название нового проекта...",
+    "createButton": "Создать",
+    "creatingButton": "Создание...",
+    "manageProjectTitle": "Управление проектом: {{name}}",
+    "inviteCodeLabel": "Код-приглашение",
+    "copyCodeTitle": "Копировать код",
+    "membersTitle": "Участники проекта",
+    "rolePlaceholder": "например, тестировщик",
+    "saveButton": "Сохранить",
+    "errorCreateFailed": "Не удалось создать проект."
+  },
+  "board": {
+    "emptyTitle": "Ваша доска пуста",
+    "emptyMessage": "Начните с создания вашей первой задачи.",
+    "createFirstTask": "Создать первую задачу",
+    "addTask": "Добавить новую задачу",
+    "dropHere": "Перетащите сюда",
+    "emptyColumn": "В этой колонке пусто.",
+    "createTaskLink": "Создать задачу"
+  },
+  "taskCard": {
+    "highPriority": "Высокий приоритет",
+    "mediumPriority": "Средний приоритет",
+    "lowPriority": "Низкий приоритет",
+    "attachments": "{{count}} вложений",
+    "comments": "{{count}} комментариев",
+    "progress": "Прогресс",
+    "dueDate": "Срок: {{date}}"
+  },
+  "taskModal": {
+    "detailsTitle": "Детали задачи",
+    "createTitle": "Создать новую задачу",
+    "titleLabel": "Название",
+    "descriptionLabel": "Описание",
+    "attachmentsTitle": "Вложения",
+    "addAttachment": "Добавить вложение",
+    "subtasksTitle": "Подзадачи",
+    "addSubtaskPlaceholder": "Добавить новую подзадачу...",
+    "addButton": "Добавить",
+    "activityTitle": "Активность",
+    "noActivity": "Активности еще нет.",
+    "addCommentPlaceholder": "Добавьте комментарий... введите @ для упоминания",
+    "sendButton": "Отправить",
+    "assigneeLabel": "Исполнитель",
+    "priorityLabel": "Приоритет",
+    "dueDateLabel": "Срок выполнения",
+    "reporterLabel": "Автор",
+    "deleteButton": "Удалить задачу",
+    "saveButton": "Сохранить изменения",
+    "createButton": "Создать задачу",
+    "errorTitleRequired": "Название обязательно."
+  },
+  "confirmationModal": {
+    "deleteTaskTitle": "Удалить задачу",
+    "deleteTaskMessage": "Вы уверены, что хотите удалить эту задачу? Это действие нельзя будет отменить.",
+    "cancel": "Отмена",
+    "confirm": "Подтвердить"
+  },
+  "userProfile": {
+    "title": "Ваш профиль",
+    "changeAvatar": "Изменить",
+    "nameLabel": "Имя",
+    "avatarPreviewLabel": "Превью аватара",
+    "avatarPreviewText": "Выбрано пользовательское изображение",
+    "avatarNote": "Нажмите на изображение выше, чтобы загрузить новое.",
+    "emailLabel": "Email",
+    "saveButton": "Сохранить изменения"
+  },
+  "dashboard": {
+    "burndownTitle": "Диаграмма сгорания задач",
+    "burndownSubtitle": "Отслеживание прогресса по отношению к идеальной скорости выполнения.",
+    "noChartData": "Недостаточно данных для диаграммы.",
+    "completedTasks": "Завершено задач",
+    "activeTasks": "Активных задач",
+    "overdueTasks": "Просрочено задач",
+    "totalTasks": "Всего задач"
+  },
+  "listView": {
+    "id": "ID",
+    "title": "Название",
+    "assignee": "Исполнитель",
+    "priority": "Приоритет",
+    "status": "Статус",
+    "dueDate": "Срок",
+    "uncategorized": "Без категории",
+    "noTasksTitle": "Нет задач для отображения",
+    "noTasksMessage": "Ваш текущий поиск или фильтр не дал результатов."
+  },
+  "workloadView": {
+    "tasksAssigned": "Назначено задач: {{count}}",
+    "unassigned": "Не назначено",
+    "tasks": "Задач: {{count}}"
+  },
+  "calendarView": {
+    "createTaskTitle": "Создать задачу на этот день"
+  },
+  "priorities": {
+    "LOW": "Низкий",
+    "MEDIUM": "Средний",
+    "HIGH": "Высокий"
+  },
+  "roles": {
+    "Admin": "Админ",
+    "Member": "Участник",
+    "Observer": "Наблюдатель"
+  }
+}
