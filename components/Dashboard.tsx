@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import type { BoardData } from '../types';
+import type { BoardData, Column, Task } from '../types';
 import { useTranslation } from '../i18n';
 
 interface DashboardProps {
@@ -44,16 +44,20 @@ const Dashboard: React.FC<DashboardProps> = ({ boardData }) => {
   const allTasks = Object.values(tasks);
 
   const doneColumnId = useMemo(() => {
-    return Object.values(columns).find(c => c.title.toLowerCase() === 'done')?.id || columnOrder[columnOrder.length -1];
+    // FIX: Add explicit type `Column` to the `c` parameter to resolve type inference issues.
+    // By casting Object.values to Column[], find will correctly infer its return type.
+    return (Object.values(columns) as Column[]).find((c) => c.title.toLowerCase() === 'done')?.id || columnOrder[columnOrder.length -1];
   }, [columns, columnOrder]);
 
   const metrics = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const completedTasks = allTasks.filter(task => columns[doneColumnId]?.taskIds.includes(task.id));
+    // FIX: Add explicit type `Task` to the `task` parameter to resolve type inference issues.
+    const completedTasks = allTasks.filter((task: Task) => columns[doneColumnId]?.taskIds.includes(task.id));
     const activeTasks = allTasks.length - completedTasks.length;
-    const overdueTasks = allTasks.filter(task => {
+    // FIX: Add explicit type `Task` to the `task` parameter to resolve type inference issues.
+    const overdueTasks = allTasks.filter((task: Task) => {
         if (!task.dueDate || columns[doneColumnId]?.taskIds.includes(task.id)) {
             return false;
         }
@@ -66,13 +70,19 @@ const Dashboard: React.FC<DashboardProps> = ({ boardData }) => {
   const burndownData = useMemo(() => {
     if (allTasks.length === 0) return null;
 
-    const start = allTasks.reduce((earliest, task) => {
+    // FIX: Add explicit types to `reduce` parameters to resolve type inference issues.
+    // Explicitly type `start` as Date to fix type inference issues.
+    // FIX: Explicitly provide the generic type argument to `reduce` to fix type inference issues.
+    const start: Date = allTasks.reduce<Date>((earliest, task: Task) => {
         const created = getCreationDate(task);
         return created < earliest ? created : earliest;
     }, new Date());
     start.setHours(0, 0, 0, 0);
 
-    const end = allTasks.reduce((latest, task) => {
+    // FIX: Add explicit types to `reduce` parameters to resolve type inference issues.
+    // Explicitly type `end` as Date to fix type inference issues.
+    // FIX: Explicitly provide the generic type argument to `reduce` to fix type inference issues.
+    const end: Date = allTasks.reduce<Date>((latest, task: Task) => {
         const due = task.dueDate ? new Date(task.dueDate) : new Date(0);
         return due > latest ? due : latest;
     }, new Date(start.getTime()));
@@ -95,7 +105,8 @@ const Dashboard: React.FC<DashboardProps> = ({ boardData }) => {
 
         const ideal = Math.max(0, totalTasks - (idealRate * i));
 
-        const completedByDate = allTasks.filter(task => {
+        // FIX: Add explicit type `Task` to the `task` parameter to resolve type inference issues.
+        const completedByDate = allTasks.filter((task: Task) => {
             const completionDate = getCompletionDate(task, doneColumnId, columns);
             return completionDate && completionDate <= date;
         }).length;
@@ -110,12 +121,12 @@ const Dashboard: React.FC<DashboardProps> = ({ boardData }) => {
 
   const renderChart = () => {
     if (!burndownData) {
-        return <div className="h-full flex items-center justify-center text-gray-500">{t('dashboard.noChartData')}</div>
+        return <div className="aspect-[500/240] flex items-center justify-center text-gray-500">{t('dashboard.noChartData')}</div>
     }
     const { points, totalTasks, durationDays } = burndownData;
     const width = 500;
-    const height = 200;
-    const padding = { top: 10, right: 10, bottom: 20, left: 30 };
+    const height = 240;
+    const padding = { top: 10, right: 30, bottom: 30, left: 30 };
     const locale = language === 'ru' ? 'ru-RU' : 'en-US';
 
     const toX = (i: number) => padding.left + (i / (durationDays - 1)) * (width - padding.left - padding.right);
@@ -124,12 +135,16 @@ const Dashboard: React.FC<DashboardProps> = ({ boardData }) => {
     const idealPath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${toX(i)} ${toY(p.ideal)}`).join(' ');
     const actualPath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${toX(i)} ${toY(p.actual)}`).join(' ');
 
+    const numYTicks = Math.min(5, totalTasks + 1);
+
     return (
         <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto">
              {/* Y Axis lines and labels */}
-            {Array.from({ length: 5 }).map((_, i) => {
-                const y = padding.top + i * (height - padding.top - padding.bottom) / 4;
-                const value = Math.round(totalTasks * (1 - (i / 4)));
+            {Array.from({ length: numYTicks }).map((_, i) => {
+                if (numYTicks <= 1) return null;
+                const valueRatio = i / (numYTicks - 1);
+                const y = padding.top + (1 - valueRatio) * (height - padding.top - padding.bottom);
+                const value = Math.round(totalTasks * valueRatio);
                 return (
                     <g key={i}>
                         <line x1={padding.left} y1={y} x2={width - padding.right} y2={y} stroke="#4A5568" strokeWidth="0.5" />
@@ -141,7 +156,7 @@ const Dashboard: React.FC<DashboardProps> = ({ boardData }) => {
              {points.map((p, i) => {
                  if (i % Math.max(1, Math.floor(durationDays / 7)) === 0) {
                      return (
-                         <text key={i} x={toX(i)} y={height - 5} fill="#A0AEC0" fontSize="10" textAnchor="middle">
+                         <text key={i} x={toX(i)} y={height - 15} fill="#A0AEC0" fontSize="10" textAnchor="middle">
                             {p.date.toLocaleDateString(locale, {month: 'short', day: 'numeric'})}
                          </text>
                      )
@@ -166,7 +181,7 @@ const Dashboard: React.FC<DashboardProps> = ({ boardData }) => {
             <div className="sm:col-span-2 lg:col-span-2">
                  <h3 className="text-lg font-semibold text-white mb-2">{t('dashboard.burndownTitle')}</h3>
                  <p className="text-sm text-gray-400 mb-4">{t('dashboard.burndownSubtitle')}</p>
-                 <div className="h-[200px] bg-gray-900/50 p-2 rounded-lg">
+                 <div className="bg-gray-900/50 p-2 rounded-lg">
                     {renderChart()}
                  </div>
             </div>

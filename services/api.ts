@@ -2,9 +2,9 @@ import type { BoardData, User, Assignee, Task, Activity, Subtask, Attachment, Pr
 import { Priority } from '../types';
 
 // --- LOCAL STORAGE KEYS ---
-const USERS_KEY = 'jiraCloneUsers';
-const PROJECTS_KEY = 'jiraCloneProjects';
-const SESSION_KEY = 'jiraCloneSession';
+export const USERS_KEY = 'jiraCloneUsers';
+export const PROJECTS_KEY = 'jiraCloneProjects';
+export const SESSION_KEY = 'jiraCloneSession';
 
 // --- MOCK LATENCY ---
 const LATENCY = 300;
@@ -49,11 +49,11 @@ const generateGeometricAvatar = (seed: string): string => {
 
 const createInitialData = () => {
     const users: User[] = [
-      { id: 'user-1', name: 'Alex Ray (Admin)', email: 'alex@example.com', avatarUrl: generateGeometricAvatar('user-1'), role: 'Admin' },
-      { id: 'user-2', name: 'Ben Carter', email: 'ben@example.com', avatarUrl: generateGeometricAvatar('user-2'), role: 'Member' },
-      { id: 'user-3', name: 'Casey Lee', email: 'casey@example.com', avatarUrl: generateGeometricAvatar('user-3'), role: 'backend-er' },
-      { id: 'user-4', name: 'Dana Riley', email: 'dana@example.com', avatarUrl: generateGeometricAvatar('user-4'), role: 'Observer' },
-      { id: 'user-5', name: 'Guest User', email: 'guest@example.com', avatarUrl: generateGeometricAvatar('user-5'), role: 'Member' },
+      { id: 'user-1', name: 'Alex Ray (Admin)', email: 'alex@example.com', avatarUrl: generateGeometricAvatar('user-1'), role: 'Admin', aboutMe: 'Lead developer and project manager for the Alpha Project.', profileBannerUrl: '#6366f1' },
+      { id: 'user-2', name: 'Ben Carter', email: 'ben@example.com', avatarUrl: generateGeometricAvatar('user-2'), role: 'Member', aboutMe: 'Frontend developer passionate about building beautiful and intuitive user interfaces with React and TypeScript.', profileBannerUrl: '#ec4899' },
+      { id: 'user-3', name: 'Casey Lee', email: 'casey@example.com', avatarUrl: generateGeometricAvatar('user-3'), role: 'backend-er', aboutMe: 'Backend engineer specializing in database architecture and API design.', profileBannerUrl: '#22c55e' },
+      { id: 'user-4', name: 'Dana Riley', email: 'dana@example.com', avatarUrl: generateGeometricAvatar('user-4'), role: 'Observer', aboutMe: 'UX/UI Designer with a focus on user-centric design principles.', profileBannerUrl: '#f97316' },
+      { id: 'user-5', name: 'Guest User', email: 'guest@example.com', avatarUrl: generateGeometricAvatar('user-5'), role: 'Member', aboutMe: 'Just here to check things out!', profileBannerUrl: '#8b5cf6' },
     ];
     const userMap = users.reduce((acc, user) => {
         acc[user.id] = user;
@@ -73,25 +73,27 @@ const createInitialData = () => {
         },
         boardData: {
             tasks: {
-                'task-1': { id: 'task-1', displayId: `ALPHA-1`, title: 'Setup project repository', description: 'Initialize git repo and setup basic folder structure.', priority: Priority.HIGH, assigneeId: 'user-2', reporterId: 'user-2', activity: [{id: 'act-1', type: 'CREATED', timestamp: new Date().toISOString(), userId: 'user-2', details: {}}], dueDate: '2024-08-15', subtasks: [
-                    { id: 'sub-1', title: 'Initialize Git', completed: true }, { id: 'sub-2', title: 'Create main branches', completed: true }, { id: 'sub-3', title: 'Add CI config file', completed: false },
+                'task-1': { id: 'task-1', displayId: `ALPHA-1`, title: 'Build Login Page Component (React)', description: 'Initialize git repo and setup basic folder structure.', priority: Priority.HIGH, assigneeId: 'user-2', reporterId: 'user-2', activity: [{id: 'act-1', type: 'CREATED', timestamp: new Date().toISOString(), userId: 'user-2', details: {}}], dueDate: '2024-08-15', subtasks: [
+                    { id: 'sub-1', title: 'Create form elements', completed: true }, { id: 'sub-2', title: 'Add validation', completed: true }, { id: 'sub-3', title: 'Connect to API', completed: false },
                 ]},
                 'task-2': { id: 'task-2', displayId: `ALPHA-2`, title: 'Design login page UI', description: 'Create Figma mockups for the user login and registration pages.', priority: Priority.MEDIUM, assigneeId: 'user-4', reporterId: 'user-1', activity: [{id: 'act-2', type: 'CREATED', timestamp: new Date().toISOString(), userId: 'user-1', details: {}}], },
                 'task-3': { id: 'task-3', displayId: `ALPHA-3`, title: 'Configure database schema', description: 'Setup PostgreSQL and define initial tables for users and tasks.', priority: Priority.HIGH, assigneeId: 'user-3', reporterId: 'user-1', activity: [{id: 'act-3', type: 'CREATED', timestamp: new Date().toISOString(), userId: 'user-1', details: {}}], dueDate: '2024-08-20' },
-                'task-4': { id: 'task-4', displayId: `ALPHA-4`, title: 'Implement JWT authentication', description: 'Develop the backend logic for user authentication using JWT.', priority: Priority.HIGH, assigneeId: 'user-3', reporterId: 'user-2', activity: [{id: 'act-4', type: 'CREATED', timestamp: new Date().toISOString(), userId: 'user-2', details: {}}], dueDate: '2024-07-01' },
-                'task-5': { id: 'task-5', displayId: `ALPHA-5`, title: 'Refactor authentication module', description: 'Improve the existing auth module with better error handling.', priority: Priority.MEDIUM, assigneeId: 'user-2', reporterId: 'user-3', activity: [{id: 'act-5', type: 'CREATED', timestamp: new Date().toISOString(), userId: 'user-3', details: {}}], dueDate: '2024-07-15' },
-                'task-6': { id: 'task-6', displayId: `ALPHA-6`, title: 'Write unit tests for API endpoints', description: 'Use Jest and Supertest to create a suite of unit tests for all user-related API endpoints.', priority: Priority.MEDIUM, assigneeId: 'user-2', reporterId: 'user-1', activity: [{id: 'act-6', type: 'CREATED', timestamp: new Date().toISOString(), userId: 'user-1', details: {}}], },
-                'task-7': { id: 'task-7', displayId: `ALPHA-7`, title: 'Documentation for the API', description: 'Create OpenAPI/Swagger documentation for all public endpoints.', priority: Priority.LOW, assigneeId: 'user-4', reporterId: 'user-1', activity: [{id: 'act-7', type: 'CREATED', timestamp: new Date().toISOString(), userId: 'user-1', details: {}}], },
-                'task-8': { id: 'task-8', displayId: `ALPHA-8`, title: 'Deploy staging environment', description: 'Setup a staging environment on Vercel/Netlify for CI/CD.', priority: Priority.LOW, assigneeId: 'user-2', reporterId: 'user-3', activity: [{id: 'act-8', type: 'CREATED', timestamp: new Date().toISOString(), userId: 'user-3', details: {}}], dueDate: '2024-07-10' },
+                'task-4': { id: 'task-4', displayId: `ALPHA-4`, title: 'Implement JWT authentication API', description: 'Develop the backend logic for user authentication using JWT.', priority: Priority.HIGH, assigneeId: 'user-3', reporterId: 'user-2', activity: [{id: 'act-4', type: 'CREATED', timestamp: new Date().toISOString(), userId: 'user-2', details: {}}], dueDate: '2024-07-01' },
+                'task-5': { id: 'task-5', displayId: `ALPHA-5`, title: 'Refactor authentication module', description: 'Improve the existing auth module with better error handling.', priority: Priority.MEDIUM, assigneeId: 'user-3', reporterId: 'user-3', activity: [{id: 'act-5', type: 'CREATED', timestamp: new Date().toISOString(), userId: 'user-3', details: {}}], dueDate: '2024-07-15' },
+                'task-6': { id: 'task-6', displayId: `ALPHA-6`, title: 'Write unit tests for Auth API', description: 'Use Jest and Supertest to create a suite of unit tests for all user-related API endpoints.', priority: Priority.MEDIUM, assigneeId: 'user-3', reporterId: 'user-1', activity: [{id: 'act-6', type: 'CREATED', timestamp: new Date().toISOString(), userId: 'user-1', details: {}}], },
+                'task-7': { id: 'task-7', displayId: `ALPHA-7`, title: 'Create API Documentation (Swagger)', description: 'Create OpenAPI/Swagger documentation for all public endpoints.', priority: Priority.LOW, assigneeId: 'user-4', reporterId: 'user-1', activity: [{id: 'act-7', type: 'CREATED', timestamp: new Date().toISOString(), userId: 'user-1', details: {}}], },
+                'task-8': { id: 'task-8', displayId: `ALPHA-8`, title: 'End-to-end test for Login Flow', description: 'Use Cypress to write an E2E test for the complete user login flow.', priority: Priority.MEDIUM, assigneeId: 'user-2', reporterId: 'user-3', activity: [{id: 'act-8', type: 'CREATED', timestamp: new Date().toISOString(), userId: 'user-3', details: {}}], dueDate: '2024-07-10' },
             },
             columns: {
                 'column-1': { id: 'column-1', title: 'Backlog', taskIds: ['task-2', 'task-7'], },
-                'column-2': { id: 'column-2', title: 'To Do', taskIds: ['task-1', 'task-3', 'task-6'], },
-                'column-3': { id: 'column-3', title: 'In Progress', taskIds: ['task-4'], },
-                'column-4': { id: 'column-4', title: 'Code Review', taskIds: ['task-5'], },
-                'column-5': { id: 'column-5', title: 'Done', taskIds: ['task-8'], },
+                'column-2': { id: 'column-2', title: 'To Do', taskIds: ['task-6'], },
+                'column-3': { id: 'column-3', title: 'Dev (Frontend)', taskIds: ['task-1'], },
+                'column-4': { id: 'column-4', title: 'Dev (Backend)', taskIds: ['task-3', 'task-4'], },
+                'column-5': { id: 'column-5', title: 'Code Review', taskIds: ['task-5'], },
+                'column-6': { id: 'column-6', title: 'QA / Testing', taskIds: ['task-8'], },
+                'column-7': { id: 'column-7', title: 'Done', taskIds: [], },
             },
-            columnOrder: ['column-1', 'column-2', 'column-3', 'column-4', 'column-5'],
+            columnOrder: ['column-1', 'column-2', 'column-3', 'column-4', 'column-5', 'column-6', 'column-7'],
         }
     };
     
@@ -152,6 +154,8 @@ export const register = async (name: string, email: string): Promise<User> => {
         email,
         avatarUrl: generateGeometricAvatar(id),
         role: 'Member', // Default global role, project-specific roles are managed separately
+        aboutMe: '',
+        profileBannerUrl: '#4b5563', // gray-600
     };
     users[id] = newUser;
     setStoredData(USERS_KEY, users);
@@ -182,7 +186,7 @@ export const getAllUsers = async (): Promise<User[]> => {
     return Object.values(users);
 };
 
-export const updateUserProfile = async (userId: string, updates: Partial<Pick<User, 'name' | 'avatarUrl'>>): Promise<User> => {
+export const updateUserProfile = async (userId: string, updates: Partial<Pick<User, 'name' | 'avatarUrl' | 'aboutMe' | 'profileBannerUrl'>>): Promise<User> => {
     await simulateLatency();
     const users = getStoredData<Record<string, User>>(USERS_KEY, {});
     const user = users[userId];

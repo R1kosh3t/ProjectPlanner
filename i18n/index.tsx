@@ -118,11 +118,12 @@ const en = {
     "title": "Your Profile",
     "changeAvatar": "Change",
     "nameLabel": "Name",
-    "avatarPreviewLabel": "Avatar Preview",
-    "avatarPreviewText": "Custom Image Selected",
-    "avatarNote": "Click the image above to upload a new one.",
     "emailLabel": "Email",
-    "saveButton": "Save Changes"
+    "saveButton": "Save Changes",
+    "aboutMe": "About Me",
+    "noBio": "No bio yet. Add something about yourself!",
+    "bioPlaceholder": "Let your team know a little about you...",
+    "bannerColor": "Banner Color"
   },
   "dashboard": {
     "burndownTitle": "Project Burndown",
@@ -282,11 +283,12 @@ const ru = {
     "title": "Ваш профиль",
     "changeAvatar": "Изменить",
     "nameLabel": "Имя",
-    "avatarPreviewLabel": "Превью аватара",
-    "avatarPreviewText": "Выбрано пользовательское изображение",
-    "avatarNote": "Нажмите на изображение выше, чтобы загрузить новое.",
     "emailLabel": "Email",
-    "saveButton": "Сохранить изменения"
+    "saveButton": "Сохранить изменения",
+    "aboutMe": "Обо мне",
+    "noBio": "Здесь пока пусто. Расскажите что-нибудь о себе!",
+    "bioPlaceholder": "Пусть ваша команда узнает вас получше...",
+    "bannerColor": "Цвет баннера"
   },
   "dashboard": {
     "burndownTitle": "Диаграмма сгорания задач",

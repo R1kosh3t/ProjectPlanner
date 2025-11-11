@@ -116,11 +116,12 @@
     "title": "Ваш профиль",
     "changeAvatar": "Изменить",
     "nameLabel": "Имя",
-    "avatarPreviewLabel": "Превью аватара",
-    "avatarPreviewText": "Выбрано пользовательское изображение",
-    "avatarNote": "Нажмите на изображение выше, чтобы загрузить новое.",
     "emailLabel": "Email",
-    "saveButton": "Сохранить изменения"
+    "saveButton": "Сохранить изменения",
+    "aboutMe": "Обо мне",
+    "noBio": "Здесь пока пусто. Расскажите что-нибудь о себе!",
+    "bioPlaceholder": "Пусть ваша команда узнает вас получше...",
+    "bannerColor": "Цвет баннера"
   },
   "dashboard": {
     "burndownTitle": "Диаграмма сгорания задач",

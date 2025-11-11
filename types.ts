@@ -10,6 +10,8 @@ export interface User {
   avatarUrl: string; // Can be a URL or a base64 data URI
   email: string;
   role: string; // Changed to string to allow custom roles like 'backend-er'
+  aboutMe?: string;
+  profileBannerUrl?: string; // Can be a color hex or a data URI
 }
 
 export interface Assignee extends User {

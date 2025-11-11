@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useMemo } from 'react';
 // FIX: Import the `Subtask` type from `./types` to resolve the "Cannot find name 'Subtask'" error.
 import type { BoardData, Task, User, Toast, ToastType, Attachment, Subtask, ViewMode, Project } from './types';
 import * as api from './services/api';
+import { PROJECTS_KEY, USERS_KEY } from './services/api';
 import Header from './components/Header';
 import Board from './components/Board';
 import CalendarView from './components/CalendarView';
@@ -82,6 +83,25 @@ function App() {
   useEffect(() => {
     initializeApp();
   }, [initializeApp]);
+  
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      // The `storage` event is fired in all tabs EXCEPT the one that made the change.
+      // This is perfect for syncing state across tabs.
+      if (event.key === PROJECTS_KEY || event.key === USERS_KEY) {
+        // A key piece of our data has changed in another tab.
+        // Re-run the initialization logic to get the fresh data.
+        initializeApp();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [initializeApp]);
+
 
   const addToast = useCallback((message: string, type: ToastType = 'success') => {
     const id = `toast-${Date.now()}`;
@@ -101,7 +121,7 @@ function App() {
     setIsAdminPanelOpen(false); // Reset modal state on logout
   }
 
-  const handleUpdateUser = async (updates: Partial<Pick<User, 'name' | 'avatarUrl'>>) => {
+  const handleUpdateUser = async (updates: Partial<Pick<User, 'name' | 'avatarUrl' | 'aboutMe' | 'profileBannerUrl'>>) => {
     if (!currentUser) return;
     try {
         const updatedUser = await api.updateUserProfile(currentUser.id, updates);
@@ -271,7 +291,8 @@ function App() {
     
     const lowerCaseQuery = searchQuery.toLowerCase();
 
-    const tasksAfterFilterAndSearch = Object.values(boardData.tasks).filter(task => {
+    // FIX: Add explicit type `Task` to the `task` parameter in the filter callback to resolve type inference issues.
+    const tasksAfterFilterAndSearch = Object.values(boardData.tasks).filter((task: Task) => {
         const matchesAssignee = assigneeFilter === 'all' || task.assigneeId === assigneeFilter;
         const matchesSearch = !lowerCaseQuery ||
             task.title.toLowerCase().includes(lowerCaseQuery) ||
@@ -280,8 +301,10 @@ function App() {
         return matchesAssignee && matchesSearch;
     });
 
-    const filteredTaskIds = new Set(tasksAfterFilterAndSearch.map(t => t.id));
-    const filteredTasks = tasksAfterFilterAndSearch.reduce((acc, task) => {
+    // FIX: Add explicit type `Task` to the `t` parameter in the map callback.
+    const filteredTaskIds = new Set(tasksAfterFilterAndSearch.map((t: Task) => t.id));
+    // FIX: Add explicit type `Task` to the `task` parameter in the reduce callback.
+    const filteredTasks = tasksAfterFilterAndSearch.reduce((acc, task: Task) => {
         acc[task.id] = task;
         return acc;
     }, {} as Record<string, Task>);

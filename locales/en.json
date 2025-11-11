@@ -116,11 +116,12 @@
     "title": "Your Profile",
     "changeAvatar": "Change",
     "nameLabel": "Name",
-    "avatarPreviewLabel": "Avatar Preview",
-    "avatarPreviewText": "Custom Image Selected",
-    "avatarNote": "Click the image above to upload a new one.",
     "emailLabel": "Email",
-    "saveButton": "Save Changes"
+    "saveButton": "Save Changes",
+    "aboutMe": "About Me",
+    "noBio": "No bio yet. Add something about yourself!",
+    "bioPlaceholder": "Let your team know a little about you...",
+    "bannerColor": "Banner Color"
   },
   "dashboard": {
     "burndownTitle": "Project Burndown",
