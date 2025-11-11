@@ -40,17 +40,33 @@
         function initSystemJS() {
             System.config({
                 transpiler: 'plugin-babel',
+                map: {
+                    'app': '.', // The 'app' package is the root directory
+                    // Explicitly map all .ts files to avoid resolution ambiguity
+                    'app/types': './types.ts',
+                    'app/constants': './constants.ts',
+                    'app/services/api': './services/api.ts',
+                    'app/services/firebase': './services/firebase.ts',
+                    'app/services/geminiService': './services/geminiService.ts'
+                },
+                packages: {
+                    'app': {
+                        main: 'index', // Entry point is index.tsx
+                        defaultExtension: 'tsx' // Default for components, App.tsx, etc.
+                    }
+                },
                 babelOptions: {
                     react: true,
                     typescript: true
                 },
                 meta: {
+                    // Tell SystemJS which loader to use for these file types once resolved
                     '*.tsx': { loader: 'plugin-babel' },
                     '*.ts': { loader: 'plugin-babel' }
                 }
             });
 
-            System.import('./index.tsx').catch(function(err) { 
+            System.import('app').catch(function(err) { 
                 console.error('SystemJS Error:', err); 
                 var root = document.getElementById('root');
                 if (root) {
