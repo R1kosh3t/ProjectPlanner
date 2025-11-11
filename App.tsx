@@ -1,5 +1,4 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-// FIX: Import the `Subtask` type from `./types` to resolve the "Cannot find name 'Subtask'" error.
 import type { BoardData, Task, User, Toast, ToastType, Attachment, Subtask, ViewMode, Project } from './types';
 import * as api from './services/api';
 import Header from './components/Header';
@@ -289,7 +288,6 @@ function App() {
     
     const lowerCaseQuery = searchQuery.toLowerCase();
 
-    // FIX: Add explicit type `Task` to the `task` parameter in the filter callback to resolve type inference issues.
     const tasksAfterFilterAndSearch = Object.values(boardData.tasks).filter((task: Task) => {
         const matchesAssignee = assigneeFilter === 'all' || task.assigneeId === assigneeFilter;
         const matchesSearch = !lowerCaseQuery ||
@@ -299,9 +297,7 @@ function App() {
         return matchesAssignee && matchesSearch;
     });
 
-    // FIX: Add explicit type `Task` to the `t` parameter in the map callback.
     const filteredTaskIds = new Set(tasksAfterFilterAndSearch.map((t: Task) => t.id));
-    // FIX: Add explicit type `Task` to the `task` parameter in the reduce callback.
     const filteredTasks = tasksAfterFilterAndSearch.reduce((acc, task: Task) => {
         acc[task.id] = task;
         return acc;
