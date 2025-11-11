@@ -34,22 +34,24 @@ This project serves as a demonstration of modern frontend development techniques
 
 ## How To Use
 
-The application is designed to work out-of-the-box in your browser, with all data saved in your browser's `localStorage`.
+The application starts with a clean slate and saves all data in your browser's `localStorage`.
 
-1.  **Authentication:**
-    - You can register a new account or use one of the pre-configured demo accounts.
-    - **Admin User:** `alex@example.com`
-    - **Member User:** `guest@example.com`
-    - (Any password will work for the demo).
+1.  **First User Registration (Admin Setup):**
+    - The very first person to register an account automatically becomes the **Administrator**.
+    - After registering, the Admin will be prompted to create the first project.
 
-2.  **Joining a Project:**
-    - If you are not an admin and not part of a project, you will be prompted to enter an invite code.
-    - Use the code `JOIN-PROJ-123` to join the default "Alpha Project".
+2.  **Creating a Project:**
+    - The Admin can access the **Admin Panel** (shield icon in the header) to create a new project.
+    - Once a project is created, an **Invite Code** will be generated.
 
-3.  **Project Management:**
+3.  **Inviting Team Members:**
+    - The Admin must share the invite code with other team members.
+    - New users can register and then use this code to join the project.
+
+4.  **Project Management:**
     - Once in a project, you can navigate between the Board, List, Calendar, and Workload views.
     - Click on any task to view its details, add comments, or update its properties.
-    - If you are an **Admin**, you can access the Admin Panel from the header to create new projects and manage user roles.
+
 
 ## Technology Stack
 
@@ -93,31 +95,4 @@ Project Planner — это комплексное веб-приложение, �
     - Система приглашений для присоединения пользователей к проектам.
     - Настраиваемые профили пользователей с аватарами, биографией и цветами баннеров.
 - **Интернационализация:** Полная поддержка **английского** и **русского** языков.
-- **Полная адаптивность:** Тщательно продуманный дизайн, который безупречно работает на настольных компьютерах, планшетах и мобильных устройствах.
-
-## Как использовать
-
-Приложение разработано для работы "из коробки" в вашем браузере, все данные сохраняются в `localStorage`.
-
-1.  **Аутентификация:**
-    - Вы можете зарегистрировать новый аккаунт или использовать один из предустановленных демо-аккаунтов.
-    - **Администратор:** `alex@example.com`
-    - **Участник:** `guest@example.com`
-    - (Для демо подойдет любой пароль).
-
-2.  **Присоединение к проекту:**
-    - Если вы не являетесь администратором и не состоите в проекте, вам будет предложено ввести код-приглашение.
-    - Используйте код `JOIN-PROJ-123`, чтобы присоединиться к стандартному проекту "Alpha Project".
-
-3.  **Управление проектом:**
-    - После входа в проект вы можете переключаться между видами: Доска, Список, Календарь и Нагрузка.
-    - Нажмите на любую задачу, чтобы просмотреть ее детали, добавить комментарии или обновить ее свойства.
-    - Если вы **Администратор**, вы можете получить доступ к Панели администратора из шапки сайта для создания новых проектов и управления ролями пользователей.
-
-## Технологический стек
-
--   **Frontend:** React 19, TypeScript
--   **Стилизация:** Tailwind CSS
--   **Управление состоянием:** React Hooks (`useState`, `useContext`, `useMemo`, `useCallback`)
--   **Хранение данных:** `localStorage` браузера используется для имитации бэкенд-базы данных, что делает приложение полностью функциональным без сервера.
--   **Интернационализация (i18n):** Реализована с использованием React Context API для переключения языков.
+- **Полная адаптивность:** Тщательно продуманный дизайн, который безупречно работает на настольных компьютерах, план

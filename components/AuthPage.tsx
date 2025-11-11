@@ -86,7 +86,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full p-3 bg-gray-900 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  placeholder="Admin: alex@example.com | Member: guest@example.com"
+                  placeholder={t('auth.emailPlaceholder')}
                 />
               </div>
             </div>
@@ -103,7 +103,6 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
                   className="w-full p-3 bg-gray-900 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   placeholder="••••••••"
                 />
-                 <p className="text-xs text-gray-500 mt-2">{t('auth.passwordNote')}</p>
               </div>
             </div>
             <div>
