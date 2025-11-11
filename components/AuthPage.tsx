@@ -9,7 +9,7 @@ interface AuthPageProps {
 const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
   const [isLoginView, setIsLoginView] = useState(true);
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState(''); // Not used for logic, just for UI
+  const [password, setPassword] = useState(''); 
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -22,20 +22,30 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
 
     try {
       if (isLoginView) {
-        await api.login(email);
+        await api.login(email, password);
       } else {
-        await api.register(name, email);
+        await api.register(name, email, password);
       }
-      onLoginSuccess();
+      // onLoginSuccess will be triggered by the onAuthStateChanged listener in App.tsx
     } catch (err: any) {
-      const errorMessage = err.message || 'An error occurred.';
-      if(errorMessage.includes('User not found')) {
-        setError(t('auth.errorUserNotFound'));
-      } else if (errorMessage.includes('Email already in use')) {
-        setError(t('auth.errorEmailInUse'));
-      } else {
-        setError(t('auth.errorGeneric'));
+      let errorMessage = err.message || 'An error occurred.';
+      if (err.code) {
+          switch(err.code) {
+              case 'auth/user-not-found':
+              case 'auth/invalid-credential':
+                  errorMessage = t('auth.errorUserNotFound');
+                  break;
+              case 'auth/email-already-in-use':
+                  errorMessage = t('auth.errorEmailInUse');
+                  break;
+              case 'auth/weak-password':
+                  errorMessage = 'Password should be at least 6 characters.';
+                  break;
+              default:
+                  errorMessage = t('auth.errorGeneric');
+          }
       }
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

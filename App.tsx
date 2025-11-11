@@ -2,7 +2,6 @@ import React, { useState, useCallback, useEffect, useMemo } from 'react';
 // FIX: Import the `Subtask` type from `./types` to resolve the "Cannot find name 'Subtask'" error.
 import type { BoardData, Task, User, Toast, ToastType, Attachment, Subtask, ViewMode, Project } from './types';
 import * as api from './services/api';
-import { PROJECTS_KEY, USERS_KEY } from './services/api';
 import Header from './components/Header';
 import Board from './components/Board';
 import CalendarView from './components/CalendarView';
@@ -42,20 +41,20 @@ function App() {
   const [viewMode, setViewMode] = useState<ViewMode>('board');
   const { t } = useTranslation();
   
-  const initializeApp = useCallback(async () => {
+  const initializeApp = useCallback(async (user: User | null) => {
     setIsLoading(true);
     try {
-      const user = await api.getCurrentUser();
       if (user) {
         setCurrentUser(user);
-        const userProjects = await api.getUserProjects(user.id);
-        const allSystemUsers = await api.getAllUsers();
+        const [userProjects, allSystemUsers] = await Promise.all([
+          api.getUserProjects(user.id),
+          api.getAllUsers()
+        ]);
         setAllUsers(allSystemUsers);
 
         if (userProjects.length > 0) {
             setHasProjectAccess(true);
-            // For now, just load the first project. A project switcher could be added later.
-            const project = userProjects[0];
+            const project = userProjects[0]; // Load first project by default
             setCurrentProject(project);
             const [board, projectAssignees] = await Promise.all([
                 api.getBoardData(project.id),
@@ -70,55 +69,53 @@ function App() {
             setAssignees([]);
         }
       } else {
+        // User is logged out
         setCurrentUser(null);
+        setBoardData(null);
+        setCurrentProject(null);
         setHasProjectAccess(false);
       }
     } catch (error) {
       console.error("Initialization failed", error);
+      addToast("Failed to load project data.", "error");
     } finally {
       setIsLoading(false);
     }
   }, []);
-
-  useEffect(() => {
-    initializeApp();
-  }, [initializeApp]);
   
   useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      // The `storage` event is fired in all tabs EXCEPT the one that made the change.
-      // This is perfect for syncing state across tabs.
-      if (event.key === PROJECTS_KEY || event.key === USERS_KEY) {
-        // A key piece of our data has changed in another tab.
-        // Re-run the initialization logic to get the fresh data.
-        initializeApp();
+    const unsubscribe = api.onAuthStateChangedListener(async (firebaseUser) => {
+      if (firebaseUser) {
+        const userData = await api.getCurrentUserData(firebaseUser);
+        initializeApp(userData);
+      } else {
+        initializeApp(null);
       }
-    };
+    });
 
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, [initializeApp]);
-
 
   const addToast = useCallback((message: string, type: ToastType = 'success') => {
     const id = `toast-${Date.now()}`;
     setToasts(prevToasts => [...prevToasts, { id, message, type }]);
   }, []);
   
-  const handleLoginSuccess = () => {
-    initializeApp();
+  const handleAuthSuccess = () => {
+     // The onAuthStateChanged listener will handle the app initialization
+     // We can add a toast or other feedback here if needed
+     addToast("Successfully logged in!");
   };
 
   const handleLogout = async () => {
-    await api.logout();
-    setCurrentUser(null);
-    setBoardData(null);
-    setHasProjectAccess(false);
-    setCurrentProject(null);
-    setIsAdminPanelOpen(false); // Reset modal state on logout
+    try {
+        await api.logout();
+        // The onAuthStateChanged listener will clear the state
+        setIsAdminPanelOpen(false); // Reset modal state on logout
+    } catch (error) {
+        addToast("Logout failed.", "error");
+    }
   }
 
   const handleUpdateUser = async (updates: Partial<Pick<User, 'name' | 'avatarUrl' | 'aboutMe' | 'profileBannerUrl'>>) => {
@@ -128,8 +125,8 @@ function App() {
         setCurrentUser(updatedUser);
         addToast('Profile updated successfully!');
         setIsProfileModalOpen(false);
-        // Refresh data if user details changed
-        initializeApp();
+        // Refresh project data if user details (like name) changed
+        if (currentUser) initializeApp(currentUser);
     } catch (error) {
         console.error("Failed to update profile", error);
         addToast("Failed to update profile", "error");
@@ -154,9 +151,10 @@ function App() {
     } catch (error) {
       console.error("Failed to move task:", error);
       addToast("Failed to move task", "error");
-      setBoardData(boardData); // Revert on error
+      // Revert on error by re-fetching
+      if (currentUser) initializeApp(currentUser);
     }
-  }, [boardData, currentProject, addToast]);
+  }, [boardData, currentProject, addToast, currentUser, initializeApp]);
   
   const handleCloseModal = () => {
     setViewingTaskId(null);
@@ -338,20 +336,20 @@ function App() {
     }
   
     if (!currentUser) {
-      return <AuthPage onLoginSuccess={handleLoginSuccess} />;
+      return <AuthPage onLoginSuccess={handleAuthSuccess} />;
     }
     
     if (!hasProjectAccess) {
       if (isAdmin) {
         return <AdminWelcome user={currentUser} onLogout={handleLogout} onCreateProjectClick={() => setIsAdminPanelOpen(true)} />;
       }
-      return <NoProjectAccess user={currentUser} onLogout={handleLogout} onProjectJoined={initializeApp} />;
+      return <NoProjectAccess user={currentUser} onLogout={handleLogout} onProjectJoined={() => initializeApp(currentUser)} />;
     }
   
     if (!boardData || !filteredBoardData || !currentProject) {
        return (
           <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-              <div className="text-white text-xl">Could not load board data.</div>
+              <div className="text-white text-xl">Loading project...</div>
           </div>
       );
     }
@@ -455,7 +453,7 @@ function App() {
             currentUser={currentUser}
             currentProjectId={currentProject?.id}
             allUsers={allUsers}
-            onDataChanged={initializeApp} // Re-initialize app on changes
+            onDataChanged={() => initializeApp(currentUser)} // Re-initialize app on changes
         />
       )}
       <ConfirmationModal

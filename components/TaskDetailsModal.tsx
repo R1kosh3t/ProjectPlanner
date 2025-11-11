@@ -236,7 +236,7 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = (props) => {
       onCreate(taskDataToSubmit, columnId);
     }
   };
-
+  
   const handleAddCommentSubmit = () => {
     if (task && newComment.trim()) {
       onAddComment(task.id, newComment.trim());
@@ -315,6 +315,7 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = (props) => {
                   <label htmlFor="title" className="block text-sm font-medium text-gray-300 mb-2">{t('taskModal.titleLabel')}</label>
                   <input type="text" id="title" name="title" value={formData.title} onChange={handleChange} className="w-full p-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500" required />
               </div>
+              
               <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-300 mb-2">{t('taskModal.descriptionLabel')}</label>
                   <RichTextEditor value={formData.description} onChange={handleDescriptionChange} />
