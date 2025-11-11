@@ -6,26 +6,65 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Project Planner</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- This script translates TSX/JSX code into plain JavaScript for the browser -->
-    <script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
-  <script type="importmap">
-{
-  "imports": {
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.26.0",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
-    "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
-    "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js",
-    "firebase/": "https://aistudiocdn.com/firebase@^12.5.0/"
-  }
-}
-</script>
-</head>
+    
+    <!-- 1. Add ES Module Shims to polyfill import maps for SystemJS -->
+    <script async src="https://ga.jspm.io/npm:es-module-shims@1.10.0/dist/es-module-shims.js"></script>
+
+    <!-- 2. Importmap now includes SystemJS plugins -->
+    <script type="importmap">
+    {
+      "imports": {
+        "@google/genai": "https://aistudiocdn.com/@google/genai@^1.26.0",
+        "react/": "https://aistudiocdn.com/react@^19.2.0/",
+        "react": "https://aistudiocdn.com/react@^19.2.0",
+        "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+        "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+        "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js",
+        "firebase/": "https://aistudiocdn.com/firebase@^12.5.0/",
+
+        "plugin-babel": "https://cdn.jsdelivr.net/npm/systemjs-plugin-babel@0.0.25/plugin-babel.js",
+        "systemjs-babel-build": "https://cdn.jsdelivr.net/npm/systemjs-plugin-babel@0.0.25/systemjs-babel-7.1.0.js"
+      }
+    }
+    </script>
+
+    <!-- 3. Load SystemJS -->
+    <script src="https://cdn.jsdelivr.net/npm/systemjs@6.14.3/dist/s.min.js"></script>
+    
+    <!-- 4. Configure SystemJS to use Babel -->
+    <script>
+      System.config({
+        // The babel plugin is mapped in the importmap, SystemJS will find it
+        transpiler: 'plugin-babel',
+        babelOptions: {
+          react: true,
+          typescript: true
+        },
+        meta: {
+          // Tell SystemJS to use the babel plugin for these file types
+          '*.tsx': { loader: 'plugin-babel' },
+          '*.ts': { loader: 'plugin-babel' }
+        }
+      });
+    </script>
+  </head>
   <body class="bg-gray-900 text-white">
     <div id="root"></div>
-    <!-- Changed type to "text/babel" and added data-type="module" to enable in-browser transpilation -->
-    <script type="text/babel" data-type="module" src="/index.tsx"></script>
+    
+    <!-- 5. Load the main app module using SystemJS, with error handling -->
+    <script>
+        System.import('/index.tsx').catch(function(err) { 
+            console.error('SystemJS Error:', err); 
+            var root = document.getElementById('root');
+            if (root) {
+                root.innerHTML = '<div style="padding: 2rem; text-align: center; color: #f87171;">' +
+                                 '<h2>Application failed to load</h2>' +
+                                 '<p>There was an error initializing the application. Please check the browser console for more details.</p>' +
+                                 '<pre style="text-align: left; background-color: #1f2937; padding: 1rem; border-radius: 0.5rem; margin-top: 1rem; overflow: auto; max-width: 100%;">' + (err.stack || err.message) + '</pre>' +
+                                 '</div>';
+            }
+        });
+    </script>
   </body>
 </html>
