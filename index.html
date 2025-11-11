@@ -29,49 +29,39 @@
     }
     </script>
 
-    <!-- 3. Load SystemJS -->
-    <script src="https://cdn.jsdelivr.net/npm/systemjs@6.14.3/dist/s.min.js"></script>
-    
-    <!-- 4. Configure SystemJS to use Babel and define the app package -->
-    <script>
-      System.config({
-        map: {
-          'app': './' // Map the 'app' package to the current directory
-        },
-        packages: {
-          'app': {
-            main: 'index.tsx', // The entry point of our app
-            defaultExtension: 'tsx',
-            meta: {
-              '*.tsx': { loader: 'plugin-babel' },
-              '*.ts': { loader: 'plugin-babel' }
-            }
-          }
-        },
-        transpiler: 'plugin-babel',
-        babelOptions: {
-          react: true,
-          typescript: true
-        }
-      });
-    </script>
+    <!-- 3. Load SystemJS and initialize the app on load -->
+    <script src="https://cdn.jsdelivr.net/npm/systemjs@6.14.3/dist/s.min.js" onload="initSystemJS()"></script>
   </head>
   <body class="bg-gray-900 text-white">
     <div id="root"></div>
     
-    <!-- 5. Load the main app module using SystemJS, with error handling -->
+    <!-- 4. Configure and load the main app module once SystemJS is ready -->
     <script>
-        System.import('app').catch(function(err) { 
-            console.error('SystemJS Error:', err); 
-            var root = document.getElementById('root');
-            if (root) {
-                root.innerHTML = '<div style="padding: 2rem; text-align: center; color: #f87171;">' +
-                                 '<h2>Application failed to load</h2>' +
-                                 '<p>There was an error initializing the application. Please check the browser console for more details.</p>' +
-                                 '<pre style="text-align: left; background-color: #1f2937; padding: 1rem; border-radius: 0.5rem; margin-top: 1rem; overflow: auto; max-width: 100%;">' + (err.stack || err.message) + '</pre>' +
-                                 '</div>';
-            }
-        });
+        function initSystemJS() {
+            System.config({
+                transpiler: 'plugin-babel',
+                babelOptions: {
+                    react: true,
+                    typescript: true
+                },
+                meta: {
+                    '*.tsx': { loader: 'plugin-babel' },
+                    '*.ts': { loader: 'plugin-babel' }
+                }
+            });
+
+            System.import('./index.tsx').catch(function(err) { 
+                console.error('SystemJS Error:', err); 
+                var root = document.getElementById('root');
+                if (root) {
+                    root.innerHTML = '<div style="padding: 2rem; text-align: center; color: #f87171;">' +
+                                     '<h2>Application failed to load</h2>' +
+                                     '<p>There was an error initializing the application. Please check the browser console for more details.</p>' +
+                                     '<pre style="text-align: left; background-color: #1f2937; padding: 1rem; border-radius: 0.5rem; margin-top: 1rem; overflow: auto; max-width: 100%;">' + (err.stack || err.message) + '</pre>' +
+                                     '</div>';
+                }
+            });
+        }
     </script>
   </body>
 </html>
