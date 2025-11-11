@@ -32,19 +32,26 @@
     <!-- 3. Load SystemJS -->
     <script src="https://cdn.jsdelivr.net/npm/systemjs@6.14.3/dist/s.min.js"></script>
     
-    <!-- 4. Configure SystemJS to use Babel -->
+    <!-- 4. Configure SystemJS to use Babel and define the app package -->
     <script>
       System.config({
-        // The babel plugin is mapped in the importmap, SystemJS will find it
+        map: {
+          'app': './' // Map the 'app' package to the current directory
+        },
+        packages: {
+          'app': {
+            main: 'index.tsx', // The entry point of our app
+            defaultExtension: 'tsx',
+            meta: {
+              '*.tsx': { loader: 'plugin-babel' },
+              '*.ts': { loader: 'plugin-babel' }
+            }
+          }
+        },
         transpiler: 'plugin-babel',
         babelOptions: {
           react: true,
           typescript: true
-        },
-        meta: {
-          // Tell SystemJS to use the babel plugin for these file types
-          '*.tsx': { loader: 'plugin-babel' },
-          '*.ts': { loader: 'plugin-babel' }
         }
       });
     </script>
@@ -54,7 +61,7 @@
     
     <!-- 5. Load the main app module using SystemJS, with error handling -->
     <script>
-        System.import('/index.tsx').catch(function(err) { 
+        System.import('app').catch(function(err) { 
             console.error('SystemJS Error:', err); 
             var root = document.getElementById('root');
             if (root) {
