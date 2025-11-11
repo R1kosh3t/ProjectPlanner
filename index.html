@@ -7,10 +7,10 @@
     <title>Project Planner</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- 1. Add ES Module Shims to polyfill import maps for SystemJS -->
+    <!-- 1. ES Module Shims polyfills import maps in browsers that need it. -->
     <script async src="https://ga.jspm.io/npm:es-module-shims@1.10.0/dist/es-module-shims.js"></script>
 
-    <!-- 2. Importmap now includes SystemJS plugins -->
+    <!-- 2. Importmap maps bare specifiers (like 'react') to full URLs. -->
     <script type="importmap">
     {
       "imports": {
@@ -21,63 +21,14 @@
         "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
         "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
         "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js",
-        "firebase/": "https://aistudiocdn.com/firebase@^12.5.0/",
-
-        "plugin-babel": "https://cdn.jsdelivr.net/npm/systemjs-plugin-babel@0.0.25/plugin-babel.js",
-        "systemjs-babel-build": "https://cdn.jsdelivr.net/npm/systemjs-plugin-babel@0.0.25/systemjs-babel-7.1.0.js"
+        "firebase/": "https://aistudiocdn.com/firebase@^12.5.0/"
       }
     }
     </script>
-
-    <!-- 3. Load SystemJS and initialize the app on load -->
-    <script src="https://cdn.jsdelivr.net/npm/systemjs@6.14.3/dist/s.min.js" onload="initSystemJS()"></script>
   </head>
   <body class="bg-gray-900 text-white">
     <div id="root"></div>
-    
-    <!-- 4. Configure and load the main app module once SystemJS is ready -->
-    <script>
-        function initSystemJS() {
-            System.config({
-                transpiler: 'plugin-babel',
-                map: {
-                    'app': '.', // The 'app' package is the root directory
-                    // Explicitly map all .ts files to avoid resolution ambiguity
-                    'app/types': './types.ts',
-                    'app/constants': './constants.ts',
-                    'app/services/api': './services/api.ts',
-                    'app/services/firebase': './services/firebase.ts',
-                    'app/services/geminiService': './services/geminiService.ts'
-                },
-                packages: {
-                    'app': {
-                        main: 'index', // Entry point is index.tsx
-                        defaultExtension: 'tsx' // Default for components, App.tsx, etc.
-                    }
-                },
-                babelOptions: {
-                    react: true,
-                    typescript: true
-                },
-                meta: {
-                    // Tell SystemJS which loader to use for these file types once resolved
-                    '*.tsx': { loader: 'plugin-babel' },
-                    '*.ts': { loader: 'plugin-babel' }
-                }
-            });
-
-            System.import('app').catch(function(err) { 
-                console.error('SystemJS Error:', err); 
-                var root = document.getElementById('root');
-                if (root) {
-                    root.innerHTML = '<div style="padding: 2rem; text-align: center; color: #f87171;">' +
-                                     '<h2>Application failed to load</h2>' +
-                                     '<p>There was an error initializing the application. Please check the browser console for more details.</p>' +
-                                     '<pre style="text-align: left; background-color: #1f2937; padding: 1rem; border-radius: 0.5rem; margin-top: 1rem; overflow: auto; max-width: 100%;">' + (err.stack || err.message) + '</pre>' +
-                                     '</div>';
-                }
-            });
-        }
-    </script>
+    <!-- 3. Load the application as a standard ES Module. The dev environment will handle transpilation. -->
+    <script type="module" src="./index.tsx"></script>
   </body>
 </html>
