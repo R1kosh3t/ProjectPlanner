@@ -44,20 +44,24 @@ const Dashboard: React.FC<DashboardProps> = ({ boardData }) => {
   const allTasks = Object.values(tasks);
 
   const doneColumnId = useMemo(() => {
-    return (Object.values(columns) as Column[]).find((c: Column) => c.title.toLowerCase() === 'done')?.id || columnOrder[columnOrder.length -1];
+    // FIX: Add explicit type `Column` to the `c` parameter to resolve type inference issues.
+    // By casting Object.values to Column[], find will correctly infer its return type.
+    return (Object.values(columns) as Column[]).find((c) => c.title.toLowerCase() === 'done')?.id || columnOrder[columnOrder.length -1];
   }, [columns, columnOrder]);
 
   const metrics = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    // FIX: Add explicit type `Task` to the `task` parameter to resolve type inference issues.
     const completedTasks = allTasks.filter((task: Task) => columns[doneColumnId]?.taskIds.includes(task.id));
     const activeTasks = allTasks.length - completedTasks.length;
+    // FIX: Add explicit type `Task` to the `task` parameter to resolve type inference issues.
     const overdueTasks = allTasks.filter((task: Task) => {
         if (!task.dueDate || columns[doneColumnId]?.taskIds.includes(task.id)) {
             return false;
         }
-        return new Date(task.dueDate) < today;
+        return new Date(`${task.dueDate}T00:00:00`) < today;
     }).length;
 
     return { completedTasks: completedTasks.length, activeTasks, overdueTasks };
@@ -66,14 +70,20 @@ const Dashboard: React.FC<DashboardProps> = ({ boardData }) => {
   const burndownData = useMemo(() => {
     if (allTasks.length === 0) return null;
 
-    const start: Date = allTasks.reduce<Date>((earliest: Date, task: Task) => {
+    // FIX: Add explicit types to `reduce` parameters to resolve type inference issues.
+    // Explicitly type `start` as Date to fix type inference issues.
+    // FIX: Explicitly provide the generic type argument to `reduce` to fix type inference issues.
+    const start: Date = allTasks.reduce<Date>((earliest, task: Task) => {
         const created = getCreationDate(task);
         return created < earliest ? created : earliest;
     }, new Date());
     start.setHours(0, 0, 0, 0);
 
-    const end: Date = allTasks.reduce<Date>((latest: Date, task: Task) => {
-        const due = task.dueDate ? new Date(task.dueDate) : new Date(0);
+    // FIX: Add explicit types to `reduce` parameters to resolve type inference issues.
+    // Explicitly type `end` as Date to fix type inference issues.
+    // FIX: Explicitly provide the generic type argument to `reduce` to fix type inference issues.
+    const end: Date = allTasks.reduce<Date>((latest, task: Task) => {
+        const due = task.dueDate ? new Date(`${task.dueDate}T00:00:00`) : new Date(0);
         return due > latest ? due : latest;
     }, new Date(start.getTime()));
     end.setHours(23, 59, 59, 999);
@@ -95,6 +105,7 @@ const Dashboard: React.FC<DashboardProps> = ({ boardData }) => {
 
         const ideal = Math.max(0, totalTasks - (idealRate * i));
 
+        // FIX: Add explicit type `Task` to the `task` parameter to resolve type inference issues.
         const completedByDate = allTasks.filter((task: Task) => {
             const completionDate = getCompletionDate(task, doneColumnId, columns);
             return completionDate && completionDate <= date;

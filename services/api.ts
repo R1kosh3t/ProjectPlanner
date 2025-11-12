@@ -1,24 +1,17 @@
 import type { BoardData, User, Assignee, Task, Activity, Subtask, Attachment, Project } from '../types';
-import { auth, db } from './firebase';
-import {
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword,
-    signOut,
-    onAuthStateChanged,
-    type User as FirebaseUser
-} from 'firebase/auth';
-import {
-    doc,
-    setDoc,
-    getDoc,
-    getDocs,
-    collection,
-    updateDoc,
-    writeBatch,
-    query,
-    where,
-    arrayUnion
-} from 'firebase/firestore';
+import { PROJECT_KEY } from '../constants';
+
+
+// --- LOCAL STORAGE SETUP ---
+const USERS_KEY = 'project_planner_users';
+const PROJECTS_KEY = 'project_planner_projects';
+const SESSION_USER_ID_KEY = 'project_planner_session_userId';
+
+const _getUsers = (): User[] => JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+const _saveUsers = (users: User[]) => localStorage.setItem(USERS_KEY, JSON.stringify(users));
+
+const _getProjects = (): Project[] => JSON.parse(localStorage.getItem(PROJECTS_KEY) || '[]');
+const _saveProjects = (projects: Project[]) => localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
 
 // --- HELPERS ---
 
@@ -55,108 +48,113 @@ const generateGeometricAvatar = (seed: string): string => {
     return `data:image/svg+xml;base64,${btoa(svg)}`;
 };
 
+const getCurrentUserId = (): string | null => sessionStorage.getItem(SESSION_USER_ID_KEY);
+
 // --- API FUNCTIONS ---
 
 // Authentication
-export const onAuthStateChangedListener = (callback: (user: FirebaseUser | null) => void) => onAuthStateChanged(auth, callback);
+let onAuthCallback: ((user: User | null) => void) | null = null;
+export const onAuthStateChangedListener = (callback: (user: User | null) => void) => {
+  onAuthCallback = callback;
+  const userId = getCurrentUserId();
+  if (userId) {
+    const user = _getUsers().find(u => u.id === userId) || null;
+    callback(user);
+  } else {
+    callback(null);
+  }
+  return () => { onAuthCallback = null; }; // Unsubscribe function
+};
 
-export const login = async (email: string, password?: string): Promise<FirebaseUser> => {
-    if (!password) throw new Error("Password is required for login.");
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    return userCredential.user;
+export const login = async (email: string, password?: string): Promise<User> => {
+    const users = _getUsers();
+    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    if (!user) {
+        throw new Error('User not found.');
+    }
+    sessionStorage.setItem(SESSION_USER_ID_KEY, user.id);
+    if (onAuthCallback) onAuthCallback(user);
+    return user;
 };
 
 export const register = async (name: string, email: string, password?: string): Promise<User> => {
-    if (!password) throw new Error("Password is required for registration.");
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const { user: firebaseUser } = userCredential;
+    const users = _getUsers();
+    if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
+        throw new Error('Email already in use.');
+    }
 
-    const usersCollectionRef = collection(db, 'users');
-    const userDocRef = doc(usersCollectionRef, firebaseUser.uid);
-    
-    const userCountSnapshot = await getDocs(usersCollectionRef);
-
+    const newUserId = `user-${Date.now()}`;
     const newUser: User = {
-        id: firebaseUser.uid,
+        id: newUserId,
         name,
         email,
-        avatarUrl: generateGeometricAvatar(firebaseUser.uid),
-        role: userCountSnapshot.size === 0 ? 'Admin' : 'Member',
+        avatarUrl: generateGeometricAvatar(newUserId),
+        role: users.length === 0 ? 'Admin' : 'Member',
         aboutMe: '',
         profileBannerUrl: '#4b5563', // gray-600
     };
-    await setDoc(userDocRef, newUser);
+    
+    users.push(newUser);
+    _saveUsers(users);
+    
+    // Automatically log in the new user
+    await login(email, password);
+    
     return newUser;
 };
 
 export const logout = async (): Promise<void> => {
-    await signOut(auth);
+    sessionStorage.removeItem(SESSION_USER_ID_KEY);
+    if (onAuthCallback) onAuthCallback(null);
 };
 
-export const getCurrentUserData = async (firebaseUser: FirebaseUser): Promise<User | null> => {
-    const userDocRef = doc(db, 'users', firebaseUser.uid);
-    const userDoc = await getDoc(userDocRef);
-    if (userDoc.exists()) {
-        return userDoc.data() as User;
-    }
-    return null;
+export const getCurrentUserData = async (user: User): Promise<User | null> => {
+    return _getUsers().find(u => u.id === user.id) || null;
 };
 
 export const getAllUsers = async (): Promise<User[]> => {
-    const usersCollectionRef = collection(db, 'users');
-    const snapshot = await getDocs(usersCollectionRef);
-    return snapshot.docs.map(doc => doc.data() as User);
+    return Promise.resolve(_getUsers());
 };
 
 export const updateUserProfile = async (userId: string, updates: Partial<Pick<User, 'name' | 'avatarUrl' | 'aboutMe' | 'profileBannerUrl'>>): Promise<User> => {
-    const userDocRef = doc(db, 'users', userId);
-    await updateDoc(userDocRef, updates);
-    const updatedDoc = await getDoc(userDocRef);
-    return updatedDoc.data() as User;
+    const users = _getUsers();
+    const userIndex = users.findIndex(u => u.id === userId);
+    if (userIndex === -1) throw new Error("User not found to update.");
+    
+    users[userIndex] = { ...users[userIndex], ...updates };
+    _saveUsers(users);
+    return users[userIndex];
 };
 
 // Project and Membership
 export const getUserProjects = async (userId: string): Promise<Project[]> => {
-    const userDocRef = doc(db, 'users', userId);
-    const userDoc = await getDoc(userDocRef);
-    const user = userDoc.data() as User;
+    const user = _getUsers().find(u => u.id === userId);
     if (!user) return [];
 
-    const projectsRef = collection(db, 'projects');
-    let projectsQuery;
-
+    const allProjects = _getProjects();
     if (user.role.toLowerCase() === 'admin') {
-        // Admins can see all projects
-        projectsQuery = query(projectsRef);
-    } else {
-        // Other users see projects where they are a member
-        projectsQuery = query(projectsRef, where(`members.${userId}`, '!=', null));
+        return allProjects;
     }
-    const snapshot = await getDocs(projectsQuery);
-    return snapshot.docs.map(doc => doc.data() as Project);
+    
+    return allProjects.filter(p => p.members[userId]);
 };
 
 export const joinProject = async (userId: string, inviteCode: string): Promise<boolean> => {
-    const projectsRef = collection(db, 'projects');
-    const q = query(projectsRef, where('inviteCode', '==', inviteCode));
-    const snapshot = await getDocs(q);
+    const projects = _getProjects();
+    const projectIndex = projects.findIndex(p => p.inviteCode === inviteCode);
     
-    if (snapshot.empty) {
+    if (projectIndex === -1) {
         throw new Error('Invalid invite code.');
     }
     
-    const projectDoc = snapshot.docs[0];
-    const projectDocRef = doc(db, 'projects', projectDoc.id);
-    
-    await updateDoc(projectDocRef, {
-        [`members.${userId}`]: { role: 'Member' }
-    });
+    projects[projectIndex].members[userId] = { role: 'Member' };
+    _saveProjects(projects);
     return true;
 };
 
 export const createProject = async (projectName: string, adminUserId: string): Promise<Project> => {
-    const newProjectId = `proj-${Date.now()}`;
-    const projectDocRef = doc(db, 'projects', newProjectId);
+    const projects = _getProjects();
+    const newProjectId = `${PROJECT_KEY.toLowerCase()}-${Date.now()}`;
     
     const newProject: Project = {
         id: newProjectId,
@@ -175,57 +173,56 @@ export const createProject = async (projectName: string, adminUserId: string): P
             columnOrder: ['col-1', 'col-2', 'col-3']
         }
     };
-    await setDoc(projectDocRef, newProject);
+    projects.push(newProject);
+    _saveProjects(projects);
     return newProject;
 };
 
 export const updateUserRoleInProject = async (projectId: string, userId: string, newRole: string): Promise<void> => {
-    const projectDocRef = doc(db, 'projects', projectId);
-    await updateDoc(projectDocRef, {
-        [`members.${userId}.role`]: newRole
-    });
+    const projects = _getProjects();
+    const project = projects.find(p => p.id === projectId);
+    if (project && project.members[userId]) {
+        project.members[userId].role = newRole;
+        _saveProjects(projects);
+    }
 };
 
 // Data retrieval for a specific project
 export const getBoardData = async (projectId: string): Promise<BoardData> => {
-    const projectDocRef = doc(db, 'projects', projectId);
-    const projectDoc = await getDoc(projectDocRef);
-    if (!projectDoc.exists()) throw new Error("Project not found");
-    return (projectDoc.data() as Project).boardData;
+    const project = _getProjects().find(p => p.id === projectId);
+    if (!project) throw new Error("Project not found");
+    return project.boardData;
 };
 
 export const getProjectAssignees = async (projectId: string): Promise<Assignee[]> => {
-    const projectDocRef = doc(db, 'projects', projectId);
-    const projectDoc = await getDoc(projectDocRef);
-    if (!projectDoc.exists()) return [];
+    const project = _getProjects().find(p => p.id === projectId);
+    if (!project) return [];
 
-    const project = projectDoc.data() as Project;
     const memberIds = Object.keys(project.members);
     if (memberIds.length === 0) return [];
     
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('id', 'in', memberIds));
-    const usersSnapshot = await getDocs(q);
-    const users = usersSnapshot.docs.map(doc => doc.data() as User);
+    const allUsers = _getUsers();
+    const projectUsers = allUsers.filter(u => memberIds.includes(u.id));
 
-    return users.map(u => ({ ...u, role: project.members[u.id].role, description: 'Team Member' }));
+    return projectUsers.map(u => ({ ...u, role: project.members[u.id].role, description: 'Team Member' }));
 };
 
-const getCurrentUserId = (): string | null => auth.currentUser?.uid || null;
 
 // Project-specific Task operations
-const getProjectDocRef = (projectId: string) => doc(db, 'projects', projectId);
+const _updateProjectBoard = (projectId: string, newBoardData: BoardData) => {
+    const projects = _getProjects();
+    const projectIndex = projects.findIndex(p => p.id === projectId);
+    if (projectIndex !== -1) {
+        projects[projectIndex].boardData = newBoardData;
+        _saveProjects(projects);
+    }
+};
 
 export const moveTask = async (projectId: string, taskId: string, sourceColumnId: string, destColumnId: string, destIndex: number): Promise<BoardData> => {
     const userId = getCurrentUserId();
     if (!userId) throw new Error("Not authenticated");
-    
-    const projectDocRef = getProjectDocRef(projectId);
-    const projectDoc = await getDoc(projectDocRef);
-    if (!projectDoc.exists()) throw new Error("Project not found");
 
-    const project = projectDoc.data() as Project;
-    const board = project.boardData;
+    const board = await getBoardData(projectId);
 
     const sourceColumn = board.columns[sourceColumnId];
     const destColumn = board.columns[destColumnId];
@@ -241,20 +238,15 @@ export const moveTask = async (projectId: string, taskId: string, sourceColumnId
         task.activity.push(newActivity);
     }
     
-    await updateDoc(projectDocRef, { 'boardData': board });
+    _updateProjectBoard(projectId, board);
     return board;
 };
 
 export const updateTask = async (projectId: string, updatedTask: Task): Promise<BoardData> => {
     const userId = getCurrentUserId();
     if (!userId) throw new Error("Not authenticated");
-    
-    const projectDocRef = getProjectDocRef(projectId);
-    const projectDoc = await getDoc(projectDocRef);
-    if (!projectDoc.exists()) throw new Error("Project not found");
 
-    const project = projectDoc.data() as Project;
-    const board = project.boardData;
+    const board = await getBoardData(projectId);
     const oldTask = board.tasks[updatedTask.id];
     
     const users = await getProjectAssignees(projectId);
@@ -274,7 +266,7 @@ export const updateTask = async (projectId: string, updatedTask: Task): Promise<
     const finalTask = { ...updatedTask, activity: [...updatedTask.activity, ...newActivity] };
     board.tasks[updatedTask.id] = finalTask;
     
-    await updateDoc(projectDocRef, { 'boardData': board });
+    _updateProjectBoard(projectId, board);
     return board;
 };
 
@@ -282,7 +274,7 @@ const generateNewTaskDisplayId = (tasks: Record<string, Task>, projectName: stri
     const prefix = projectName.slice(0, 5).toUpperCase();
     const existingIds = Object.values(tasks)
         .filter(t => t.displayId.startsWith(prefix))
-        .map(t => parseInt(t.displayId.split('-')[1], 10));
+        .map(t => parseInt(t.displayId.split('-')[1] || '0', 10));
     const maxId = Math.max(0, ...existingIds);
     return `${prefix}-${maxId + 1}`;
 };
@@ -291,11 +283,9 @@ export const addTask = async (projectId: string, taskData: Omit<Task, 'id' | 're
     const userId = getCurrentUserId();
     if (!userId) throw new Error("Not authenticated");
     
-    const projectDocRef = getProjectDocRef(projectId);
-    const projectDoc = await getDoc(projectDocRef);
-    if (!projectDoc.exists()) throw new Error("Project not found");
+    const project = _getProjects().find(p => p.id === projectId);
+    if (!project) throw new Error("Project not found");
 
-    const project = projectDoc.data() as Project;
     const board = project.boardData;
     
     const newDisplayId = generateNewTaskDisplayId(board.tasks, project.name);
@@ -310,98 +300,94 @@ export const addTask = async (projectId: string, taskData: Omit<Task, 'id' | 're
     board.tasks[newId] = newTask;
     board.columns[columnId].taskIds.unshift(newId);
     
-    await updateDoc(projectDocRef, { 'boardData': board });
+    _updateProjectBoard(projectId, board);
     return { board, newDisplayId };
 };
 
 export const deleteTask = async (projectId: string, taskId: string): Promise<BoardData> => {
-    const projectDocRef = getProjectDocRef(projectId);
-    const projectDoc = await getDoc(projectDocRef);
-    if (!projectDoc.exists()) throw new Error("Project not found");
-
-    const project = projectDoc.data() as Project;
-    const board = project.boardData;
+    const board = await getBoardData(projectId);
     
     delete board.tasks[taskId];
     for (const columnId in board.columns) {
         board.columns[columnId].taskIds = board.columns[columnId].taskIds.filter(id => id !== taskId);
     }
     
-    await updateDoc(projectDocRef, { 'boardData': board });
+    _updateProjectBoard(projectId, board);
     return board;
 };
 
 const updateTaskProperty = async (projectId: string, taskId: string, update: Partial<Task>): Promise<BoardData> => {
-    const projectDocRef = getProjectDocRef(projectId);
-    // In Firestore, you can update nested objects using dot notation
-    const updates = Object.keys(update).reduce((acc, key) => {
-        acc[`boardData.tasks.${taskId}.${key}`] = update[key as keyof Task];
-        return acc;
-    }, {} as Record<string, any>);
+    const board = await getBoardData(projectId);
+    if (!board.tasks[taskId]) throw new Error("Task not found to update property");
     
-    await updateDoc(projectDocRef, updates);
+    board.tasks[taskId] = { ...board.tasks[taskId], ...update };
     
-    const updatedDoc = await getDoc(projectDocRef);
-    return (updatedDoc.data() as Project).boardData;
+    _updateProjectBoard(projectId, board);
+    return board;
 }
-
 
 export const addComment = async (projectId: string, taskId: string, commentText: string): Promise<BoardData> => {
     const userId = getCurrentUserId();
     if (!userId) throw new Error("Not authenticated");
     
+    const board = await getBoardData(projectId);
+    const task = board.tasks[taskId];
+    if (!task) throw new Error("Task not found to add comment");
+    
     const newComment: Activity = {
         id: `act-${Date.now()}`, type: 'COMMENT', timestamp: new Date().toISOString(), userId, details: { text: commentText }
     };
     
-    const projectDocRef = getProjectDocRef(projectId);
-    await updateDoc(projectDocRef, {
-        [`boardData.tasks.${taskId}.activity`]: arrayUnion(newComment)
-    });
+    task.activity.push(newComment);
     
-    const updatedDoc = await getDoc(projectDocRef);
-    return (updatedDoc.data() as Project).boardData;
+    _updateProjectBoard(projectId, board);
+    return board;
 };
 
 // Subtasks and Attachments
-const getTaskFromBoard = async (projectId: string, taskId: string): Promise<Task> => {
-    const projectDocRef = getProjectDocRef(projectId);
-    const projectDoc = await getDoc(projectDocRef);
-    if (!projectDoc.exists()) throw new Error("Project not found");
-    const board = (projectDoc.data() as Project).boardData;
+export const addSubtask = async (projectId: string, taskId: string, title: string): Promise<BoardData> => {
+    const board = await getBoardData(projectId);
     const task = board.tasks[taskId];
     if (!task) throw new Error("Task not found");
-    return task;
-};
-
-
-export const addSubtask = async (projectId: string, taskId: string, title: string): Promise<BoardData> => {
-    const task = await getTaskFromBoard(projectId, taskId);
+    
     const newSubtask: Subtask = { id: `sub-${Date.now()}`, title, completed: false };
     const updatedSubtasks = [...(task.subtasks || []), newSubtask];
+    
     return updateTaskProperty(projectId, taskId, { subtasks: updatedSubtasks });
 };
 
 export const updateSubtask = async (projectId: string, taskId: string, subtaskId: string, updates: Partial<Subtask>): Promise<BoardData> => {
-    const task = await getTaskFromBoard(projectId, taskId);
+    const board = await getBoardData(projectId);
+    const task = board.tasks[taskId];
+    if (!task) throw new Error("Task not found");
+
     const updatedSubtasks = (task.subtasks || []).map(st => st.id === subtaskId ? { ...st, ...updates } : st);
     return updateTaskProperty(projectId, taskId, { subtasks: updatedSubtasks });
 };
 
 export const deleteSubtask = async (projectId: string, taskId: string, subtaskId: string): Promise<BoardData> => {
-    const task = await getTaskFromBoard(projectId, taskId);
+    const board = await getBoardData(projectId);
+    const task = board.tasks[taskId];
+    if (!task) throw new Error("Task not found");
+
     const updatedSubtasks = (task.subtasks || []).filter(st => st.id !== subtaskId);
     return updateTaskProperty(projectId, taskId, { subtasks: updatedSubtasks });
 };
 
 export const addAttachment = async (projectId: string, taskId: string, attachment: Attachment): Promise<BoardData> => {
-    const task = await getTaskFromBoard(projectId, taskId);
+    const board = await getBoardData(projectId);
+    const task = board.tasks[taskId];
+    if (!task) throw new Error("Task not found");
+    
     const updatedAttachments = [...(task.attachments || []), attachment];
     return updateTaskProperty(projectId, taskId, { attachments: updatedAttachments });
 };
 
 export const deleteAttachment = async (projectId: string, taskId: string, attachmentId: string): Promise<BoardData> => {
-    const task = await getTaskFromBoard(projectId, taskId);
+    const board = await getBoardData(projectId);
+    const task = board.tasks[taskId];
+    if (!task) throw new Error("Task not found");
+
     const updatedAttachments = (task.attachments || []).filter(att => att.id !== attachmentId);
     return updateTaskProperty(projectId, taskId, { attachments: updatedAttachments });
 };

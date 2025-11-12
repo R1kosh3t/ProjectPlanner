@@ -104,7 +104,8 @@
     "deleteButton": "Удалить задачу",
     "saveButton": "Сохранить изменения",
     "createButton": "Создать задачу",
-    "errorTitleRequired": "Название обязательно."
+    "errorTitleRequired": "Название обязательно.",
+    "noDate": "Выберите дату"
   },
   "confirmationModal": {
     "deleteTaskTitle": "Удалить задачу",

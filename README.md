@@ -6,7 +6,7 @@ A modern, Jira-like project management tool for organizing your workflow with a 
 
 Project Planner is a comprehensive web application built to simplify project management for development teams, freelancers, and individuals. It offers a suite of powerful features in a clean, uncluttered interface, focusing on usability and clarity. The goal is to provide the core functionalities of popular tools like Jira or Trello in a lightweight, modern, and easy-to-use package.
 
-This project serves as a demonstration of modern frontend development techniques, showcasing a feature-rich, single-page application built entirely with React and TypeScript, using the browser's `localStorage` to simulate a backend for a complete, standalone experience.
+This project serves as a demonstration of modern frontend development techniques, showcasing a feature-rich, single-page application built entirely with React and TypeScript, using the browser's **`localStorage`** to persist all data for a complete, standalone, serverless experience.
 
 ## Key Features
 
@@ -26,7 +26,7 @@ This project serves as a demonstration of modern frontend development techniques
 - **Project Dashboard:** Get a high-level overview of project health with a **Burndown Chart** and key statistics like completed, active, and overdue tasks.
 - **User and Project Management:**
     - A dedicated **Admin Panel** to create new projects.
-    - Secure user authentication (Login/Registration).
+    - Simulated user authentication (Login/Registration) with data stored locally.
     - Invite-based system for users to join projects.
     - Customizable user profiles with avatars, bios, and banner colors.
 - **Internationalization:** Full support for both **English** and **Russian** languages.
@@ -58,7 +58,7 @@ The application starts with a clean slate and saves all data in your browser's `
 -   **Frontend:** React 19, TypeScript
 -   **Styling:** Tailwind CSS
 -   **State Management:** React Hooks (`useState`, `useContext`, `useMemo`, `useCallback`)
--   **Data Persistence:** Browser `localStorage` is used to simulate a backend database, making the app fully functional without a server.
+-   **Data Persistence:** Browser `localStorage` is used to store all application data, making the app fully functional without a server.
 -   **Internationalization (i18n):** Implemented using React Context API for language switching.
 
 ---
@@ -71,7 +71,7 @@ The application starts with a clean slate and saves all data in your browser's `
 
 Project Planner — это комплексное веб-приложение, созданное для упрощения управления проектами для команд разработчиков, фрилансеров и индивидуальных пользователей. Оно предлагает набор мощных функций в чистом и простом интерфейсе, с акцентом на удобство использования и наглядность. Цель — предоставить основные функции популярных инструментов, таких как Jira или Trello, в легком, современном и простом в использовании пакете.
 
-Этот проект служит демонстрацией современных техник frontend-разработки, представляя многофункциональное одностраничное приложение, полностью созданное на React и TypeScript, использующее `localStorage` браузера для имитации бэкенда, что обеспечивает полноценную и автономную работу.
+Этот проект служит демонстрацией современных техник frontend-разработки, представляя многофункциональное одностраничное приложение, полностью созданное на React и TypeScript, использующее **`localStorage`** браузера для сохранения всех данных, что обеспечивает полноценную и автономную работу без сервера.
 
 ## Ключевые возможности
 
@@ -91,8 +91,8 @@ Project Planner — это комплексное веб-приложение, �
 - **Панель мониторинга проекта:** Получите общее представление о состоянии проекта с помощью **Диаграммы сгорания задач** и ключевых статистических данных, таких как завершенные, активные и просроченные задачи.
 - **Управление пользователями и проектами:**
     - Специальная **Панель администратора** для создания новых проектов.
-    - Безопасная аутентификация пользователей (Вход/Регистрация).
+    - Имитация аутентификации пользователей (Вход/Регистрация) с локальным хранением данных.
     - Система приглашений для присоединения пользователей к проектам.
     - Настраиваемые профили пользователей с аватарами, биографией и цветами баннеров.
 - **Интернационализация:** Полная поддержка **английского** и **русского** языков.
-- **Полная адаптивность:** Тщательно продуманный дизайн, который безупречно работает на настольных компьютерах, план
+- **Полная адаптивность:** Тщательно продуманный дизайн, который безупречно работает на настольных компьютерах, план---

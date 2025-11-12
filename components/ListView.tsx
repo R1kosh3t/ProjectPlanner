@@ -70,8 +70,8 @@ const ListView: React.FC<ListViewProps> = ({ tasks, assignees, columns, onViewTa
                         compareResult = aStatus.localeCompare(bStatus);
                         break;
                     case 'dueDate':
-                        const aDate = a.dueDate ? new Date(a.dueDate).getTime() : 0;
-                        const bDate = b.dueDate ? new Date(b.dueDate).getTime() : 0;
+                        const aDate = a.dueDate ? new Date(`${a.dueDate}T00:00:00`).getTime() : 0;
+                        const bDate = b.dueDate ? new Date(`${b.dueDate}T00:00:00`).getTime() : 0;
                         compareResult = aDate - bDate;
                         break;
                     case 'assigneeId':
@@ -135,7 +135,7 @@ const ListView: React.FC<ListViewProps> = ({ tasks, assignees, columns, onViewTa
                                     </td>
                                     <td className="px-6 py-4">{t(`priorities.${task.priority}`)}</td>
                                     <td className="px-6 py-4">{status}</td>
-                                    <td className="px-6 py-4">{task.dueDate ? new Date(task.dueDate).toLocaleDateString(locale) : 'N/A'}</td>
+                                    <td className="px-6 py-4">{task.dueDate ? new Date(`${task.dueDate}T00:00:00`).toLocaleDateString(locale) : 'N/A'}</td>
                                 </tr>
                             )
                         })}

@@ -28,23 +28,15 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
       }
       // onLoginSuccess will be triggered by the onAuthStateChanged listener in App.tsx
     } catch (err: any) {
-      let errorMessage = err.message || 'An error occurred.';
-      if (err.code) {
-          switch(err.code) {
-              case 'auth/user-not-found':
-              case 'auth/invalid-credential':
-                  errorMessage = t('auth.errorUserNotFound');
-                  break;
-              case 'auth/email-already-in-use':
-                  errorMessage = t('auth.errorEmailInUse');
-                  break;
-              case 'auth/weak-password':
-                  errorMessage = 'Password should be at least 6 characters.';
-                  break;
-              default:
-                  errorMessage = t('auth.errorGeneric');
-          }
+      let errorMessage = err.message || t('auth.errorGeneric');
+      
+      // Map new error messages to translation keys
+      if (errorMessage.includes('User not found')) {
+          errorMessage = t('auth.errorUserNotFound');
+      } else if (errorMessage.includes('Email already in use')) {
+          errorMessage = t('auth.errorEmailInUse');
       }
+
       setError(errorMessage);
     } finally {
       setIsLoading(false);

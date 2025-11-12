@@ -104,7 +104,8 @@
     "deleteButton": "Delete Task",
     "saveButton": "Save Changes",
     "createButton": "Create Task",
-    "errorTitleRequired": "Title is required."
+    "errorTitleRequired": "Title is required.",
+    "noDate": "Select a date"
   },
   "confirmationModal": {
     "deleteTaskTitle": "Delete Task",

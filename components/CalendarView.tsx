@@ -42,7 +42,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, assignees, onViewTas
     const map: Record<string, Task[]> = {};
     tasks.forEach(task => {
       if (task.dueDate) {
-        const dateKey = new Date(task.dueDate).toDateString();
+        const dateKey = new Date(`${task.dueDate}T00:00:00`).toDateString();
         if (!map[dateKey]) {
           map[dateKey] = [];
         }

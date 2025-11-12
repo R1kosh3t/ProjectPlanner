@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
+// FIX: Import the `Subtask` type from `./types` to resolve the "Cannot find name 'Subtask'" error.
 import type { BoardData, Task, User, Toast, ToastType, Attachment, Subtask, ViewMode, Project } from './types';
 import * as api from './services/api';
 import Header from './components/Header';
@@ -44,9 +45,13 @@ function App() {
     setIsLoading(true);
     try {
       if (user) {
-        setCurrentUser(user);
+        const fullUserData = await api.getCurrentUserData(user);
+        if (!fullUserData) {
+            throw new Error("User data inconsistent. Logging out.");
+        }
+        setCurrentUser(fullUserData);
         const [userProjects, allSystemUsers] = await Promise.all([
-          api.getUserProjects(user.id),
+          api.getUserProjects(fullUserData.id),
           api.getAllUsers()
         ]);
         setAllUsers(allSystemUsers);
@@ -77,19 +82,17 @@ function App() {
     } catch (error) {
       console.error("Initialization failed", error);
       addToast("Failed to load project data.", "error");
+      if (error instanceof Error && error.message.includes("inconsistent")) {
+          await api.logout();
+      }
     } finally {
       setIsLoading(false);
     }
   }, []);
   
   useEffect(() => {
-    const unsubscribe = api.onAuthStateChangedListener(async (firebaseUser) => {
-      if (firebaseUser) {
-        const userData = await api.getCurrentUserData(firebaseUser);
-        initializeApp(userData);
-      } else {
-        initializeApp(null);
-      }
+    const unsubscribe = api.onAuthStateChangedListener((user) => {
+      initializeApp(user);
     });
 
     // Cleanup subscription on unmount
@@ -288,6 +291,7 @@ function App() {
     
     const lowerCaseQuery = searchQuery.toLowerCase();
 
+    // FIX: Add explicit type `Task` to the `task` parameter in the filter callback to resolve type inference issues.
     const tasksAfterFilterAndSearch = Object.values(boardData.tasks).filter((task: Task) => {
         const matchesAssignee = assigneeFilter === 'all' || task.assigneeId === assigneeFilter;
         const matchesSearch = !lowerCaseQuery ||
@@ -297,7 +301,9 @@ function App() {
         return matchesAssignee && matchesSearch;
     });
 
+    // FIX: Add explicit type `Task` to the `t` parameter in the map callback.
     const filteredTaskIds = new Set(tasksAfterFilterAndSearch.map((t: Task) => t.id));
+    // FIX: Add explicit type `Task` to the `task` parameter in the reduce callback.
     const filteredTasks = tasksAfterFilterAndSearch.reduce((acc, task: Task) => {
         acc[task.id] = task;
         return acc;

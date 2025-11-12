@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import type { Task, Priority, User, Activity, Subtask, Attachment } from '../types';
 import { Priority as PriorityEnum } from '../types';
 import RichTextEditor from './RichTextEditor';
 import { useTranslation } from '../i18n';
+import DatePicker from './DatePicker';
 
 interface TaskDetailsModalProps {
   task: Task | null;
@@ -156,7 +158,8 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = (props) => {
     onSubtaskAdd, onSubtaskUpdate, onSubtaskDelete, onAttachmentAdd, onAttachmentDelete, defaultValues
   } = props;
   
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+  const locale = language === 'ru' ? 'ru-RU' : 'en-US';
   const isEditMode = !!task;
   const [formData, setFormData] = useState({
     title: '',
@@ -172,6 +175,10 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = (props) => {
   const [mentionQuery, setMentionQuery] = useState('');
   const [isMentionListVisible, setIsMentionListVisible] = useState(false);
   const commentInputRef = useRef<HTMLInputElement>(null);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [datePickerStyle, setDatePickerStyle] = useState<React.CSSProperties>({});
+  const datePickerButtonRef = useRef<HTMLButtonElement>(null);
+
 
   useEffect(() => {
     if (isEditMode && task) {
@@ -208,6 +215,44 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = (props) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleDateChange = (newDate: string) => {
+    setFormData(prev => ({ ...prev, dueDate: newDate }));
+    setIsDatePickerOpen(false);
+  };
+  
+  const toggleDatePicker = () => {
+    if (!isDatePickerOpen && datePickerButtonRef.current) {
+      const rect = datePickerButtonRef.current.getBoundingClientRect();
+      const datePickerHeight = 330; // Estimation of DatePicker height
+      const datePickerWidth = 288; // w-72 in DatePicker.tsx -> 18rem * 16px/rem
+
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      
+      let top;
+      if (spaceBelow < datePickerHeight && spaceAbove > datePickerHeight) {
+        // Position above
+        top = rect.top - datePickerHeight - 8; // 8px for margin
+      } else {
+        // Position below
+        top = rect.bottom + 8; // 8px for margin
+      }
+
+      let left = rect.left;
+      if (left + datePickerWidth > window.innerWidth) {
+        left = window.innerWidth - datePickerWidth - 8;
+      }
+      
+      setDatePickerStyle({
+        position: 'fixed',
+        top: `${top}px`,
+        left: `${left}px`,
+        zIndex: 100, // Higher than modal z-index (50)
+      });
+    }
+    setIsDatePickerOpen(prev => !prev);
   };
 
   const handleDescriptionChange = (value: string) => {
@@ -296,157 +341,179 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = (props) => {
   const displayedReporter = isEditMode && task ? assignees.find(a => a.id === task.reporterId) : currentUser;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-4xl border border-gray-700 max-h-[90vh] flex flex-col" onClick={handleContentClick}>
-        <div className="flex justify-between items-start mb-4">
-            <div>
-                {isEditMode && <p className="text-sm text-gray-400">{task.displayId}</p>}
-                <h2 className="text-2xl font-bold">{isEditMode ? t('taskModal.detailsTitle') : t('taskModal.createTitle')}</h2>
-            </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
-        </div>
+    <React.Fragment>
+      <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4" onClick={onClose}>
+        <div className="bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-4xl border border-gray-700 max-h-[90vh] flex flex-col" onClick={handleContentClick}>
+          <div className="flex justify-between items-start mb-4">
+              <div>
+                  {isEditMode && <p className="text-sm text-gray-400">{task.displayId}</p>}
+                  <h2 className="text-2xl font-bold">{isEditMode ? t('taskModal.detailsTitle') : t('taskModal.createTitle')}</h2>
+              </div>
+              <button onClick={onClose} className="text-gray-400 hover:text-white">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+          </div>
 
-        <div className="flex-grow overflow-y-auto pr-2 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2">
-            <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
-              <div className="mb-4">
-                  <label htmlFor="title" className="block text-sm font-medium text-gray-300 mb-2">{t('taskModal.titleLabel')}</label>
-                  <input type="text" id="title" name="title" value={formData.title} onChange={handleChange} className="w-full p-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500" required />
-              </div>
-              
-              <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">{t('taskModal.descriptionLabel')}</label>
-                  <RichTextEditor value={formData.description} onChange={handleDescriptionChange} />
-              </div>
-            </form>
-            
-            {isEditMode && task && (
-              <>
-                <div className="mt-6 border-t border-gray-700 pt-4">
-                  <h3 className="text-lg font-semibold mb-2">{t('taskModal.attachmentsTitle')}</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
-                    {task.attachments?.map(att => (
-                        <AttachmentItem key={att.id} attachment={att} onDelete={() => onAttachmentDelete(task.id, att.id)} />
-                    ))}
-                  </div>
-                   <label className="w-full text-center cursor-pointer mt-2 bg-gray-700 hover:bg-gray-600 text-sm text-gray-300 font-semibold py-2 px-4 rounded-lg transition">
-                      {t('taskModal.addAttachment')}
-                      <input type="file" className="hidden" onChange={handleFileUpload} />
-                   </label>
+          <div className="flex-grow overflow-y-auto pr-2 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2">
+              <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+                <div className="mb-4">
+                    <label htmlFor="title" className="block text-sm font-medium text-gray-300 mb-2">{t('taskModal.titleLabel')}</label>
+                    <input type="text" id="title" name="title" value={formData.title} onChange={handleChange} className="w-full p-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500" required />
                 </div>
+                
+                <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">{t('taskModal.descriptionLabel')}</label>
+                    <RichTextEditor value={formData.description} onChange={handleDescriptionChange} />
+                </div>
+              </form>
+              
+              {isEditMode && task && (
+                <>
+                  <div className="mt-6 border-t border-gray-700 pt-4">
+                    <h3 className="text-lg font-semibold mb-2">{t('taskModal.attachmentsTitle')}</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+                      {task.attachments?.map(att => (
+                          <AttachmentItem key={att.id} attachment={att} onDelete={() => onAttachmentDelete(task.id, att.id)} />
+                      ))}
+                    </div>
+                     <label className="w-full text-center cursor-pointer mt-2 bg-gray-700 hover:bg-gray-600 text-sm text-gray-300 font-semibold py-2 px-4 rounded-lg transition">
+                        {t('taskModal.addAttachment')}
+                        <input type="file" className="hidden" onChange={handleFileUpload} />
+                     </label>
+                  </div>
 
-                <div className="mt-6 border-t border-gray-700 pt-4">
-                  <h3 className="text-lg font-semibold mb-2">{t('taskModal.subtasksTitle')}</h3>
-                  {totalSubtasks > 0 && (
-                      <div className="mb-4">
-                          <div className="w-full bg-gray-700 rounded-full h-2">
-                              <div className="bg-indigo-500 h-2 rounded-full" style={{ width: `${progress}%` }}></div>
+                  <div className="mt-6 border-t border-gray-700 pt-4">
+                    <h3 className="text-lg font-semibold mb-2">{t('taskModal.subtasksTitle')}</h3>
+                    {totalSubtasks > 0 && (
+                        <div className="mb-4">
+                            <div className="w-full bg-gray-700 rounded-full h-2">
+                                <div className="bg-indigo-500 h-2 rounded-full" style={{ width: `${progress}%` }}></div>
+                            </div>
+                        </div>
+                    )}
+                    <div className="space-y-1 mb-2">
+                        {task.subtasks?.map(st => (
+                            <SubtaskItem key={st.id} task={task} subtask={st} onSubtaskUpdate={onSubtaskUpdate} onSubtaskDelete={onSubtaskDelete} />
+                        ))}
+                    </div>
+                    <form onSubmit={(e) => { e.preventDefault(); handleAddSubtaskSubmit(); }}>
+                        <div className="flex gap-2">
+                            <input 
+                                type="text" 
+                                value={newSubtaskTitle}
+                                onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                                placeholder={t('taskModal.addSubtaskPlaceholder')}
+                                className="flex-grow p-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                            />
+                            <button type="submit" className="bg-gray-600 hover:bg-gray-500 text-white font-semibold py-2 px-4 rounded-lg transition disabled:opacity-50" disabled={!newSubtaskTitle.trim()}>{t('taskModal.addButton')}</button>
+                        </div>
+                    </form>
+                  </div>
+
+                  <div className="mt-6 border-t border-gray-700 pt-4">
+                      <h3 className="text-lg font-semibold mb-4">{t('taskModal.activityTitle')}</h3>
+                      <div className="space-y-4 mb-4">
+                          {sortedActivity.length > 0 ? sortedActivity.map(activity => {
+                              const author = assignees.find(a => a.id === activity.userId);
+                              return <ActivityItem key={activity.id} activity={activity} author={author} assignees={assignees} />;
+                          }) : <p className="text-gray-500">{t('taskModal.noActivity')}</p>}
+                      </div>
+                      <form onSubmit={(e) => { e.preventDefault(); handleAddCommentSubmit(); }} className="relative">
+                          <div className="flex gap-2">
+                              <input 
+                                  ref={commentInputRef}
+                                  type="text" 
+                                  value={newComment}
+                                  onChange={handleCommentChange}
+                                  placeholder={t('taskModal.addCommentPlaceholder')}
+                                  className="flex-grow p-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                              />
+                              <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg transition disabled:opacity-50" disabled={!newComment.trim()}>{t('taskModal.sendButton')}</button>
+                          </div>
+                           {isMentionListVisible && filteredAssignees.length > 0 && (
+                              <div className="absolute bottom-full mb-1 w-full bg-gray-900 border border-gray-600 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+                                  {filteredAssignees.map(a => (
+                                      <div key={a.id} onClick={() => handleMentionSelect(a.name)} className="flex items-center gap-2 p-2 cursor-pointer hover:bg-indigo-500/20">
+                                          <img src={a.avatarUrl} alt={a.name} className="w-6 h-6 rounded-full"/>
+                                          <span className="text-sm">{a.name}</span>
+                                      </div>
+                                  ))}
+                              </div>
+                          )}
+                      </form>
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="md:col-span-1">
+               <div className="bg-gray-900/50 p-4 rounded-lg space-y-4">
+                   <div>
+                      <label htmlFor="assigneeId" className="block text-sm font-medium text-gray-300 mb-2">{t('taskModal.assigneeLabel')}</label>
+                      <select id="assigneeId" name="assigneeId" value={formData.assigneeId} onChange={handleChange} className="w-full p-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                          {assignees.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                      </select>
+                  </div>
+                   <div>
+                      <label htmlFor="priority" className="block text-sm font-medium text-gray-300 mb-2">{t('taskModal.priorityLabel')}</label>
+                      <select id="priority" name="priority" value={formData.priority} onChange={handleChange} className="w-full p-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                          {Object.values(PriorityEnum).map(p => <option key={p} value={p}>{t(`priorities.${p}`)}</option>)}
+                      </select>
+                  </div>
+                   <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">{t('taskModal.dueDateLabel')}</label>
+                       <div className="relative">
+                          <button
+                            ref={datePickerButtonRef}
+                            type="button"
+                            onClick={toggleDatePicker}
+                            className="w-full p-2 text-left bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 flex justify-between items-center"
+                          >
+                            <span>{formData.dueDate ? new Date(`${formData.dueDate}T00:00:00`).toLocaleDateString(locale) : t('taskModal.noDate')}</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                          </button>
+                        </div>
+                  </div>
+                   {displayedReporter && (
+                      <div>
+                          <span className="block text-sm font-medium text-gray-300 mb-2">{t('taskModal.reporterLabel')}</span>
+                          <div className="flex items-center p-2 bg-gray-700 rounded-lg h-[42px]">
+                              <div className="flex items-center gap-2">
+                                  <img src={displayedReporter.avatarUrl} alt={displayedReporter.name} className="w-6 h-6 rounded-full"/>
+                                  <span className="text-sm text-gray-200">{displayedReporter.name}</span>
+                              </div>
                           </div>
                       </div>
                   )}
-                  <div className="space-y-1 mb-2">
-                      {task.subtasks?.map(st => (
-                          <SubtaskItem key={st.id} task={task} subtask={st} onSubtaskUpdate={onSubtaskUpdate} onSubtaskDelete={onSubtaskDelete} />
-                      ))}
-                  </div>
-                  <form onSubmit={(e) => { e.preventDefault(); handleAddSubtaskSubmit(); }}>
-                      <div className="flex gap-2">
-                          <input 
-                              type="text" 
-                              value={newSubtaskTitle}
-                              onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                              placeholder={t('taskModal.addSubtaskPlaceholder')}
-                              className="flex-grow p-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                          />
-                          <button type="submit" className="bg-gray-600 hover:bg-gray-500 text-white font-semibold py-2 px-4 rounded-lg transition disabled:opacity-50" disabled={!newSubtaskTitle.trim()}>{t('taskModal.addButton')}</button>
-                      </div>
-                  </form>
-                </div>
-
-                <div className="mt-6 border-t border-gray-700 pt-4">
-                    <h3 className="text-lg font-semibold mb-4">{t('taskModal.activityTitle')}</h3>
-                    <div className="space-y-4 mb-4">
-                        {sortedActivity.length > 0 ? sortedActivity.map(activity => {
-                            const author = assignees.find(a => a.id === activity.userId);
-                            return <ActivityItem key={activity.id} activity={activity} author={author} assignees={assignees} />;
-                        }) : <p className="text-gray-500">{t('taskModal.noActivity')}</p>}
-                    </div>
-                    <form onSubmit={(e) => { e.preventDefault(); handleAddCommentSubmit(); }} className="relative">
-                        <div className="flex gap-2">
-                            <input 
-                                ref={commentInputRef}
-                                type="text" 
-                                value={newComment}
-                                onChange={handleCommentChange}
-                                placeholder={t('taskModal.addCommentPlaceholder')}
-                                className="flex-grow p-2 bg-gray-900 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                            />
-                            <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg transition disabled:opacity-50" disabled={!newComment.trim()}>{t('taskModal.sendButton')}</button>
-                        </div>
-                         {isMentionListVisible && filteredAssignees.length > 0 && (
-                            <div className="absolute bottom-full mb-1 w-full bg-gray-900 border border-gray-600 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
-                                {filteredAssignees.map(a => (
-                                    <div key={a.id} onClick={() => handleMentionSelect(a.name)} className="flex items-center gap-2 p-2 cursor-pointer hover:bg-indigo-500/20">
-                                        <img src={a.avatarUrl} alt={a.name} className="w-6 h-6 rounded-full"/>
-                                        <span className="text-sm">{a.name}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </form>
-                </div>
-              </>
-            )}
-          </div>
-          <div className="md:col-span-1">
-             <div className="bg-gray-900/50 p-4 rounded-lg space-y-4">
-                 <div>
-                    <label htmlFor="assigneeId" className="block text-sm font-medium text-gray-300 mb-2">{t('taskModal.assigneeLabel')}</label>
-                    <select id="assigneeId" name="assigneeId" value={formData.assigneeId} onChange={handleChange} className="w-full p-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                        {assignees.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-                    </select>
-                </div>
-                 <div>
-                    <label htmlFor="priority" className="block text-sm font-medium text-gray-300 mb-2">{t('taskModal.priorityLabel')}</label>
-                    <select id="priority" name="priority" value={formData.priority} onChange={handleChange} className="w-full p-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                        {Object.values(PriorityEnum).map(p => <option key={p} value={p}>{t(`priorities.${p}`)}</option>)}
-                    </select>
-                </div>
-                 <div>
-                    <label htmlFor="dueDate" className="block text-sm font-medium text-gray-300 mb-2">{t('taskModal.dueDateLabel')}</label>
-                    <input type="date" id="dueDate" name="dueDate" value={formData.dueDate} onChange={handleChange} className="w-full p-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500" />
-                </div>
-                 {displayedReporter && (
-                    <div>
-                        <span className="block text-sm font-medium text-gray-300 mb-2">{t('taskModal.reporterLabel')}</span>
-                        <div className="flex items-center p-2 bg-gray-700 rounded-lg h-[42px]">
-                            <div className="flex items-center gap-2">
-                                <img src={displayedReporter.avatarUrl} alt={displayedReporter.name} className="w-6 h-6 rounded-full"/>
-                                <span className="text-sm text-gray-200">{displayedReporter.name}</span>
-                            </div>
-                        </div>
-                    </div>
-                )}
-             </div>
-          </div>
-        </div>
-
-          <div className="mt-6 flex-shrink-0 flex justify-between items-center border-t border-gray-700 pt-4">
-            <div>
-              {isEditMode && task && (
-                <button onClick={() => onDelete(task.id)} className="text-red-500 hover:text-red-400 font-semibold transition">
-                  {t('taskModal.deleteButton')}
-                </button>
-              )}
+               </div>
             </div>
-            <button onClick={handleSubmit} className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-6 rounded-lg transition">
-              {isEditMode ? t('taskModal.saveButton') : t('taskModal.createButton')}
-            </button>
           </div>
+
+            <div className="mt-6 flex-shrink-0 flex justify-between items-center border-t border-gray-700 pt-4">
+              <div>
+                {isEditMode && task && (
+                  <button onClick={() => onDelete(task.id)} className="text-red-500 hover:text-red-400 font-semibold transition">
+                    {t('taskModal.deleteButton')}
+                  </button>
+                )}
+              </div>
+              <button onClick={handleSubmit} className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-6 rounded-lg transition">
+                {isEditMode ? t('taskModal.saveButton') : t('taskModal.createButton')}
+              </button>
+            </div>
+        </div>
       </div>
-    </div>
+      {isDatePickerOpen && ReactDOM.createPortal(
+        <div style={datePickerStyle}>
+          <DatePicker
+            value={formData.dueDate}
+            onChange={handleDateChange}
+            onClose={() => setIsDatePickerOpen(false)}
+          />
+        </div>,
+        document.body
+      )}
+    </React.Fragment>
   );
 };
 

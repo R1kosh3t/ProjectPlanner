@@ -106,7 +106,8 @@ const en = {
     "deleteButton": "Delete Task",
     "saveButton": "Save Changes",
     "createButton": "Create Task",
-    "errorTitleRequired": "Title is required."
+    "errorTitleRequired": "Title is required.",
+    "noDate": "Select a date"
   },
   "confirmationModal": {
     "deleteTaskTitle": "Delete Task",
@@ -271,7 +272,8 @@ const ru = {
     "deleteButton": "Удалить задачу",
     "saveButton": "Сохранить изменения",
     "createButton": "Создать задачу",
-    "errorTitleRequired": "Название обязательно."
+    "errorTitleRequired": "Название обязательно.",
+    "noDate": "Выберите дату"
   },
   "confirmationModal": {
     "deleteTaskTitle": "Удалить задачу",
@@ -353,6 +355,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   useEffect(() => {
     localStorage.setItem('app-lang', language);
+    document.documentElement.lang = language;
   }, [language]);
 
   const t = useCallback((key: string, replacements?: Record<string, string | number>): string => {
